@@ -1,6 +1,6 @@
 security:
     password_hashers:
-        App\Entity\User:
+        App\Entity\Dentist:
             algorithm: auto
 
     providers:
@@ -31,9 +31,11 @@ security:
             jwt: ~
 
     access_control:
-        - { path: ^/api/login, roles: PUBLIC_ACCESS }
-        - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
-
+    - { path: ^/api/login, roles: PUBLIC_ACCESS }
+    - { path: ^/api/docs, roles: PUBLIC_ACCESS }
+    - { path: ^/api$, roles: PUBLIC_ACCESS }
+    - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
+    
 when@test:
     security:
         password_hashers:
