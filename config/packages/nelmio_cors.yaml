@@ -6,7 +6,7 @@ nelmio_cors:
         allow_methods: ['GET', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']
         max_age: 3600
     paths:
-        '^/api/':
+        '^/api':
             allow_origin: ['http://localhost:4200']
             allow_headers: ['Content-Type', 'Authorization']
             allow_methods: ['GET', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']

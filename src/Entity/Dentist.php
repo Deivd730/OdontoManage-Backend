@@ -2,45 +2,89 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Put;
 use App\Repository\DentistRepository;
+use App\State\DentistPasswordHasher;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Serializer\Annotation\Groups;
+use Vich\UploaderBundle\Mapping\Annotation as Vich;
 
 #[ORM\Entity(repositoryClass: DentistRepository::class)]
+#[Vich\Uploadable]
+#[ApiResource(
+    operations: [
+        new GetCollection(),
+        new Post(processor: DentistPasswordHasher::class),
+        new Get(),
+        new Put(processor: DentistPasswordHasher::class),
+        new Patch(processor: DentistPasswordHasher::class),
+        new Delete()
+    ],
+    normalizationContext: ['groups' => ['dentist:read']],
+    denormalizationContext: ['groups' => ['dentist:write']]
+)]
 class Dentist implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['dentist:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 180, unique: true)]
+    #[Groups(['dentist:read', 'dentist:write'])]
     private ?string $email = null;
 
     #[ORM\Column]
+    #[Groups(['dentist:read', 'dentist:write'])]
     private array $roles = [];
 
     /**
      * @var string The hashed password
      */
     #[ORM\Column]
+    #[Groups(['dentist:write'])]
     private ?string $password = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['dentist:read', 'dentist:write'])]
     private ?string $firstName = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['dentist:read', 'dentist:write'])]
     private ?string $lastName = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['dentist:read', 'dentist:write'])]
     private ?string $specialty = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['dentist:read', 'dentist:write'])]
     private ?string $availableDays = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['dentist:read', 'dentist:write'])]
     private ?string $phone = null;
+
+    #[Vich\UploadableField(mapping: 'profile_images', fileNameProperty: 'profileImageName')]
+    #[Groups(['dentist:write'])]
+    private ?File $profileImageFile = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['dentist:read'])]
+    private ?string $profileImageName = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $updatedAt = null;
 
     public function getId(): ?int
     {
@@ -172,5 +216,39 @@ class Dentist implements UserInterface, PasswordAuthenticatedUserInterface
         $this->phone = $phone;
 
         return $this;
+    }
+
+    public function setProfileImageFile(?File $profileImageFile = null): void
+    {
+        $this->profileImageFile = $profileImageFile;
+
+        if (null !== $profileImageFile) {
+            $this->updatedAt = new \DateTimeImmutable();
+        }
+    }
+
+    public function getProfileImageFile(): ?File
+    {
+        return $this->profileImageFile;
+    }
+
+    public function setProfileImageName(?string $profileImageName): void
+    {
+        $this->profileImageName = $profileImageName;
+    }
+
+    public function getProfileImageName(): ?string
+    {
+        return $this->profileImageName;
+    }
+
+    public function getUpdatedAt(): ?\DateTimeImmutable
+    {
+        return $this->updatedAt;
+    }
+
+    public function setUpdatedAt(?\DateTimeImmutable $updatedAt): void
+    {
+        $this->updatedAt = $updatedAt;
     }
 }

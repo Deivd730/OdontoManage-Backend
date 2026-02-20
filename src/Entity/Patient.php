@@ -6,13 +6,16 @@ use ApiPlatform\Metadata\ApiResource;
 use App\Repository\PatientRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Vich\UploaderBundle\Mapping\Annotation as Vich;
 
 #[ApiResource(
     normalizationContext: ['groups' => ['patient:read']],
     denormalizationContext: ['groups' => ['patient:write']]
 )]
+#[Vich\Uploadable]
 #[ORM\Entity(repositoryClass: PatientRepository::class)]
 #[ORM\Table(
     uniqueConstraints: [
@@ -89,9 +92,16 @@ class Patient
     #[Groups(['patient:read', 'patient:write'])]
     private ?\DateTimeImmutable $registrationDate = null;
 
+    #[Vich\UploadableField(mapping: 'profile_images', fileNameProperty: 'profileImageName')]
+    #[Groups(['patient:write'])]
+    private ?File $profileImageFile = null;
+
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['patient:read', 'patient:write'])]
-    private ?string $image = null;
+    #[Groups(['patient:read'])]
+    private ?string $profileImageName = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $updatedAt = null;
 
     public function __construct()
     {
@@ -233,13 +243,37 @@ class Patient
         return $this;
     }
 
-    public function getImage(): ?string
+    public function setProfileImageFile(?File $profileImageFile = null): void
     {
-        return $this->image;
+        $this->profileImageFile = $profileImageFile;
+
+        if (null !== $profileImageFile) {
+            $this->updatedAt = new \DateTimeImmutable();
+        }
     }
-    public function setImage(?string $image): static
+
+    public function getProfileImageFile(): ?File
     {
-        $this->image = $image;
-        return $this;
+        return $this->profileImageFile;
+    }
+
+    public function setProfileImageName(?string $profileImageName): void
+    {
+        $this->profileImageName = $profileImageName;
+    }
+
+    public function getProfileImageName(): ?string
+    {
+        return $this->profileImageName;
+    }
+
+    public function getUpdatedAt(): ?\DateTimeImmutable
+    {
+        return $this->updatedAt;
+    }
+
+    public function setUpdatedAt(?\DateTimeImmutable $updatedAt): void
+    {
+        $this->updatedAt = $updatedAt;
     }
 }
