@@ -31,16 +31,12 @@ security:
             jwt: ~
 
     access_control:
-    - { path: ^/api/login, roles: PUBLIC_ACCESS }
-    - { path: ^/api/docs, roles: PUBLIC_ACCESS }
-    - { path: ^/api$, roles: PUBLIC_ACCESS }
-    - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
-    
-when@test:
-    security:
-        password_hashers:
-            App\Entity\Dentist:
-                algorithm: auto
-                cost: 4
-                time_cost: 3
-                memory_cost: 10
+        # 1. ESTA REGLA ES LA QUE FALTA: Permitir OPTIONS de forma global para CORS
+        - { path: ^/api, roles: PUBLIC_ACCESS, methods: [OPTIONS] }
+
+        # 2. El resto de tus reglas
+        - { path: ^/api/login, roles: PUBLIC_ACCESS }
+        - { path: ^/api/docs, roles: PUBLIC_ACCESS }
+        - { path: ^/api$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/dentists$, roles: PUBLIC_ACCESS, methods: [POST] }    
+        - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
