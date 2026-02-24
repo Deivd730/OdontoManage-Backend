@@ -2,15 +2,7 @@
 
 namespace App\Entity;
 
-use ApiPlatform\Metadata\ApiResource;
-use ApiPlatform\Metadata\Delete;
-use ApiPlatform\Metadata\Get;
-use ApiPlatform\Metadata\GetCollection;
-use ApiPlatform\Metadata\Patch;
-use ApiPlatform\Metadata\Post;
-use ApiPlatform\Metadata\Put;
 use App\Repository\DentistRepository;
-use App\State\DentistPasswordHasher;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
@@ -20,18 +12,6 @@ use Vich\UploaderBundle\Mapping\Annotation as Vich;
 
 #[ORM\Entity(repositoryClass: DentistRepository::class)]
 #[Vich\Uploadable]
-#[ApiResource(
-    operations: [
-        new GetCollection(),
-        new Post(processor: DentistPasswordHasher::class),
-        new Get(),
-        new Put(processor: DentistPasswordHasher::class),
-        new Patch(processor: DentistPasswordHasher::class),
-        new Delete()
-    ],
-    normalizationContext: ['groups' => ['dentist:read']],
-    denormalizationContext: ['groups' => ['dentist:write']]
-)]
 class Dentist implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]

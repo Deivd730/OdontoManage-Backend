@@ -2,7 +2,6 @@
 
 namespace App\Entity;
 
-use ApiPlatform\Metadata\ApiResource;
 use App\Repository\PatientRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -11,10 +10,6 @@ use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Vich\UploaderBundle\Mapping\Annotation as Vich;
 
-#[ApiResource(
-    normalizationContext: ['groups' => ['patient:read']],
-    denormalizationContext: ['groups' => ['patient:write']]
-)]
 #[Vich\Uploadable]
 #[ORM\Entity(repositoryClass: PatientRepository::class)]
 #[ORM\Table(
