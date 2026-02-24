@@ -2,26 +2,28 @@
 
 namespace App\Entity;
 
-use App\Repository\ToothRepository;
+use App\Repository\OdontogramRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity(repositoryClass: ToothRepository::class)]
-class Tooth
+#[ORM\Entity(repositoryClass: OdontogramRepository::class)]
+class Odontogram
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column]
-    private ?int $toothNumber = null;
+    #[ORM\ManyToOne(targetEntity: Patient::class)]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Patient $patient = null;
 
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $description = null;
+    #[ORM\ManyToOne(targetEntity: Appointment::class)]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?Appointment $appointment = null;
 
-    #[ORM\OneToMany(mappedBy: 'tooth', targetEntity: ToothPathology::class)]
+    #[ORM\OneToMany(mappedBy: 'odontogram', targetEntity: ToothPathology::class, cascade: ['persist', 'remove'])]
     private Collection $toothPathologies;
 
     public function __construct()
@@ -34,26 +36,26 @@ class Tooth
         return $this->id;
     }
 
-    public function getToothNumber(): ?int
+    public function getPatient(): ?Patient
     {
-        return $this->toothNumber;
+        return $this->patient;
     }
 
-    public function setToothNumber(int $toothNumber): static
+    public function setPatient(?Patient $patient): static
     {
-        $this->toothNumber = $toothNumber;
+        $this->patient = $patient;
 
         return $this;
     }
 
-    public function getDescription(): ?string
+    public function getAppointment(): ?Appointment
     {
-        return $this->description;
+        return $this->appointment;
     }
 
-    public function setDescription(?string $description): static
+    public function setAppointment(?Appointment $appointment): static
     {
-        $this->description = $description;
+        $this->appointment = $appointment;
 
         return $this;
     }
@@ -70,7 +72,7 @@ class Tooth
     {
         if (!$this->toothPathologies->contains($toothPathology)) {
             $this->toothPathologies->add($toothPathology);
-            $toothPathology->setTooth($this);
+            $toothPathology->setOdontogram($this);
         }
 
         return $this;
@@ -79,8 +81,8 @@ class Tooth
     public function removeToothPathology(ToothPathology $toothPathology): static
     {
         if ($this->toothPathologies->removeElement($toothPathology)) {
-            if ($toothPathology->getTooth() === $this) {
-                $toothPathology->setTooth(null);
+            if ($toothPathology->getOdontogram() === $this) {
+                $toothPathology->setOdontogram(null);
             }
         }
 

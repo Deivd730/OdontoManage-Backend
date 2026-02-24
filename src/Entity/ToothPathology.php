@@ -13,9 +13,9 @@ class ToothPathology
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(targetEntity: Patient::class)]
+    #[ORM\ManyToOne(targetEntity: Odontogram::class, inversedBy: 'toothPathologies')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?Patient $patient = null;
+    private ?Odontogram $odontogram = null;
 
     #[ORM\ManyToOne(targetEntity: Tooth::class)]
     #[ORM\JoinColumn(nullable: false)]
@@ -36,14 +36,14 @@ class ToothPathology
         return $this->id;
     }
 
-    public function getPatient(): ?Patient
+    public function getOdontogram(): ?Odontogram
     {
-        return $this->patient;
+        return $this->odontogram;
     }
 
-    public function setPatient(?Patient $patient): static
+    public function setOdontogram(?Odontogram $odontogram): static
     {
-        $this->patient = $patient;
+        $this->odontogram = $odontogram;
 
         return $this;
     }
