@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\BoxRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: BoxRepository::class)]
@@ -21,6 +23,18 @@ class Box
 
     #[ORM\Column(length: 255)]
     private ?string $status = null;
+
+    #[ORM\OneToMany(mappedBy: 'box', targetEntity: Dentist::class)]
+    private Collection $dentists;
+
+    #[ORM\OneToMany(mappedBy: 'box', targetEntity: Appointment::class)]
+    private Collection $appointments;
+
+    public function __construct()
+    {
+        $this->dentists = new ArrayCollection();
+        $this->appointments = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -59,6 +73,64 @@ class Box
     public function setStatus(string $status): static
     {
         $this->status = $status;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Dentist>
+     */
+    public function getDentists(): Collection
+    {
+        return $this->dentists;
+    }
+
+    public function addDentist(Dentist $dentist): static
+    {
+        if (!$this->dentists->contains($dentist)) {
+            $this->dentists->add($dentist);
+            $dentist->setBox($this);
+        }
+
+        return $this;
+    }
+
+    public function removeDentist(Dentist $dentist): static
+    {
+        if ($this->dentists->removeElement($dentist)) {
+            if ($dentist->getBox() === $this) {
+                $dentist->setBox(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Appointment>
+     */
+    public function getAppointments(): Collection
+    {
+        return $this->appointments;
+    }
+
+    public function addAppointment(Appointment $appointment): static
+    {
+        if (!$this->appointments->contains($appointment)) {
+            $this->appointments->add($appointment);
+            $appointment->setBox($this);
+        }
+
+        return $this;
+    }
+
+    public function removeAppointment(Appointment $appointment): static
+    {
+        if ($this->appointments->removeElement($appointment)) {
+            if ($appointment->getBox() === $this) {
+                $appointment->setBox(null);
+            }
+        }
 
         return $this;
     }

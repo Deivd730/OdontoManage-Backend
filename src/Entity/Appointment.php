@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\AppointmentRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -35,6 +37,22 @@ class Appointment
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $consultationReason = null;
+
+    #[ORM\ManyToOne(targetEntity: self::class, inversedBy: 'relatedAppointments')]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?self $parentAppointment = null;
+
+    #[ORM\OneToMany(mappedBy: 'parentAppointment', targetEntity: self::class)]
+    private Collection $relatedAppointments;
+
+    #[ORM\OneToMany(mappedBy: 'appointment', targetEntity: Odontogram::class)]
+    private Collection $odontograms;
+
+    public function __construct()
+    {
+        $this->relatedAppointments = new ArrayCollection();
+        $this->odontograms = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -109,6 +127,76 @@ class Appointment
     public function setConsultationReason(?string $consultationReason): static
     {
         $this->consultationReason = $consultationReason;
+
+        return $this;
+    }
+
+    public function getParentAppointment(): ?self
+    {
+        return $this->parentAppointment;
+    }
+
+    public function setParentAppointment(?self $parentAppointment): static
+    {
+        $this->parentAppointment = $parentAppointment;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, self>
+     */
+    public function getRelatedAppointments(): Collection
+    {
+        return $this->relatedAppointments;
+    }
+
+    public function addRelatedAppointment(self $appointment): static
+    {
+        if (!$this->relatedAppointments->contains($appointment)) {
+            $this->relatedAppointments->add($appointment);
+            $appointment->setParentAppointment($this);
+        }
+
+        return $this;
+    }
+
+    public function removeRelatedAppointment(self $appointment): static
+    {
+        if ($this->relatedAppointments->removeElement($appointment)) {
+            if ($appointment->getParentAppointment() === $this) {
+                $appointment->setParentAppointment(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Odontogram>
+     */
+    public function getOdontograms(): Collection
+    {
+        return $this->odontograms;
+    }
+
+    public function addOdontogram(Odontogram $odontogram): static
+    {
+        if (!$this->odontograms->contains($odontogram)) {
+            $this->odontograms->add($odontogram);
+            $odontogram->setAppointment($this);
+        }
+
+        return $this;
+    }
+
+    public function removeOdontogram(Odontogram $odontogram): static
+    {
+        if ($this->odontograms->removeElement($odontogram)) {
+            if ($odontogram->getAppointment() === $this) {
+                $odontogram->setAppointment(null);
+            }
+        }
 
         return $this;
     }

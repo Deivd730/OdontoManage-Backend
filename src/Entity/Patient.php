@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\PatientRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\HttpFoundation\File\File;
@@ -98,9 +100,25 @@ class Patient
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $updatedAt = null;
 
+    #[ORM\ManyToOne(targetEntity: Dentist::class, inversedBy: 'patients')]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?Dentist $dentist = null;
+
+    #[ORM\OneToMany(mappedBy: 'patient', targetEntity: Document::class)]
+    private Collection $documents;
+
+    #[ORM\OneToMany(mappedBy: 'patient', targetEntity: Appointment::class)]
+    private Collection $appointments;
+
+    #[ORM\OneToMany(mappedBy: 'patient', targetEntity: Odontogram::class)]
+    private Collection $odontograms;
+
     public function __construct()
     {
         $this->registrationDate = new \DateTimeImmutable();
+        $this->documents = new ArrayCollection();
+        $this->appointments = new ArrayCollection();
+        $this->odontograms = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -270,5 +288,104 @@ class Patient
     public function setUpdatedAt(?\DateTimeImmutable $updatedAt): void
     {
         $this->updatedAt = $updatedAt;
+    }
+
+    public function getDentist(): ?Dentist
+    {
+        return $this->dentist;
+    }
+
+    public function setDentist(?Dentist $dentist): static
+    {
+        $this->dentist = $dentist;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Document>
+     */
+    public function getDocuments(): Collection
+    {
+        return $this->documents;
+    }
+
+    public function addDocument(Document $document): static
+    {
+        if (!$this->documents->contains($document)) {
+            $this->documents->add($document);
+            $document->setPatient($this);
+        }
+
+        return $this;
+    }
+
+    public function removeDocument(Document $document): static
+    {
+        if ($this->documents->removeElement($document)) {
+            if ($document->getPatient() === $this) {
+                $document->setPatient(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Appointment>
+     */
+    public function getAppointments(): Collection
+    {
+        return $this->appointments;
+    }
+
+    public function addAppointment(Appointment $appointment): static
+    {
+        if (!$this->appointments->contains($appointment)) {
+            $this->appointments->add($appointment);
+            $appointment->setPatient($this);
+        }
+
+        return $this;
+    }
+
+    public function removeAppointment(Appointment $appointment): static
+    {
+        if ($this->appointments->removeElement($appointment)) {
+            if ($appointment->getPatient() === $this) {
+                $appointment->setPatient(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Odontogram>
+     */
+    public function getOdontograms(): Collection
+    {
+        return $this->odontograms;
+    }
+
+    public function addOdontogram(Odontogram $odontogram): static
+    {
+        if (!$this->odontograms->contains($odontogram)) {
+            $this->odontograms->add($odontogram);
+            $odontogram->setPatient($this);
+        }
+
+        return $this;
+    }
+
+    public function removeOdontogram(Odontogram $odontogram): static
+    {
+        if ($this->odontograms->removeElement($odontogram)) {
+            if ($odontogram->getPatient() === $this) {
+                $odontogram->setPatient(null);
+            }
+        }
+
+        return $this;
     }
 }
