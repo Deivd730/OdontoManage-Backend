@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\ToothPathologyRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: ToothPathologyRepository::class)]
 class ToothPathology
@@ -11,6 +12,7 @@ class ToothPathology
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['odontogram:read'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(targetEntity: Odontogram::class, inversedBy: 'toothPathologies')]
@@ -19,16 +21,20 @@ class ToothPathology
 
     #[ORM\ManyToOne(targetEntity: Tooth::class)]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['odontogram:read', 'odontogram:write'])]
     private ?Tooth $tooth = null;
 
     #[ORM\ManyToOne(targetEntity: Pathology::class)]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['odontogram:read', 'odontogram:write'])]
     private ?Pathology $pathology = null;
 
     #[ORM\Column]
+    #[Groups(['odontogram:read', 'odontogram:write'])]
     private ?int $toothFace = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['odontogram:read', 'odontogram:write'])]
     private ?string $status = null;
 
     public function getId(): ?int

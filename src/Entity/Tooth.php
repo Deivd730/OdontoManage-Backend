@@ -6,6 +6,7 @@ use App\Repository\ToothRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: ToothRepository::class)]
 class Tooth
@@ -13,12 +14,15 @@ class Tooth
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['tooth:read', 'odontogram:read'])]
     private ?int $id = null;
 
     #[ORM\Column]
+    #[Groups(['tooth:read', 'tooth:write', 'odontogram:read', 'odontogram:write'])]
     private ?int $toothNumber = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['tooth:read', 'tooth:write', 'odontogram:read'])]
     private ?string $description = null;
 
     #[ORM\OneToMany(mappedBy: 'tooth', targetEntity: ToothPathology::class)]
