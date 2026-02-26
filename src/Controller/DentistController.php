@@ -31,7 +31,7 @@ class DentistController extends AbstractController
         $dentists = $this->dentistRepository->findAll();
         $data = $this->serializer->serialize($dentists, 'json', ['groups' => 'dentist:read']);
 
-        return JsonResponse::fromJson($data);
+        return JsonResponse::fromJsonString($data);
     }
 
     #[Route('/{id}', methods: ['GET'])]
@@ -39,7 +39,7 @@ class DentistController extends AbstractController
     {
         $data = $this->serializer->serialize($dentist, 'json', ['groups' => 'dentist:read']);
 
-        return JsonResponse::fromJson($data);
+        return JsonResponse::fromJsonString($data);
     }
 
     #[Route('', methods: ['POST'])]
@@ -68,7 +68,7 @@ class DentistController extends AbstractController
 
             $data = $this->serializer->serialize($dentist, 'json', ['groups' => 'dentist:read']);
 
-            return JsonResponse::fromJson($data, Response::HTTP_CREATED);
+            return JsonResponse::fromJsonString($data, Response::HTTP_CREATED);
         } catch (\Exception $e) {
             return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
         }
@@ -100,7 +100,7 @@ class DentistController extends AbstractController
 
             $data = $this->serializer->serialize($dentist, 'json', ['groups' => 'dentist:read']);
 
-            return JsonResponse::fromJson($data);
+            return JsonResponse::fromJsonString($data);
         } catch (\Exception $e) {
             return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
         }
@@ -132,7 +132,7 @@ class DentistController extends AbstractController
 
             $data = $this->serializer->serialize($dentist, 'json', ['groups' => 'dentist:read']);
 
-            return JsonResponse::fromJson($data);
+            return JsonResponse::fromJsonString($data);
         } catch (\Exception $e) {
             return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
         }
