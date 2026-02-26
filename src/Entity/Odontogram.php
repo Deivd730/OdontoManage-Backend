@@ -6,6 +6,7 @@ use App\Repository\OdontogramRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: OdontogramRepository::class)]
 class Odontogram
@@ -13,17 +14,21 @@ class Odontogram
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['odontogram:read'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(targetEntity: Patient::class)]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['odontogram:read', 'odontogram:write'])]
     private ?Patient $patient = null;
 
     #[ORM\ManyToOne(targetEntity: Appointment::class)]
     #[ORM\JoinColumn(nullable: true)]
+    #[Groups(['odontogram:read', 'odontogram:write'])]
     private ?Appointment $appointment = null;
 
     #[ORM\OneToMany(mappedBy: 'odontogram', targetEntity: ToothPathology::class, cascade: ['persist', 'remove'])]
+    #[Groups(['odontogram:read', 'odontogram:write'])]
     private Collection $toothPathologies;
 
     public function __construct()

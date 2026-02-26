@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: PathologyRepository::class)]
 class Pathology
@@ -14,12 +15,15 @@ class Pathology
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['pathology:read', 'odontogram:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['pathology:read', 'pathology:write', 'odontogram:read', 'odontogram:write'])]
     private ?string $description = null;
 
     #[ORM\Column(type: Types::TIME_MUTABLE, nullable: true)]
+    #[Groups(['pathology:read', 'pathology:write'])]
     private ?\DateTimeInterface $time = null;
 
     #[ORM\OneToMany(mappedBy: 'pathology', targetEntity: ToothPathology::class)]

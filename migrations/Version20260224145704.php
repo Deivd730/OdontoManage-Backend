@@ -63,17 +63,107 @@ final class Version20260224145704 extends AbstractMigration
             (3, 'Endodoncia', 'Tratamiento de conductos', 90)
         ");
 
-        $this->addSql("INSERT INTO pathology (id, description, time) VALUES
-            (1, 'Caries inicial', '00:15:00'),
-            (2, 'Fractura', '00:20:00'),
-            (3, 'Gingivitis', '00:25:00')
+        // Insertar patologías completas
+        $this->addSql("INSERT INTO pathology (description, time) VALUES
+            ('Caries', NULL),
+            ('Obturación (empaste)', NULL),
+            ('Corona', NULL),
+            ('Endodoncia (tratamiento de conducto)', NULL),
+            ('Extracción', NULL),
+            ('Fractura', NULL),
+            ('Ausente', NULL),
+            ('Implante', NULL),
+            ('Prótesis fija', NULL),
+            ('Prótesis removible', NULL),
+            ('Puente', NULL),
+            ('Diente incluido', NULL),
+            ('Diente en erupción', NULL),
+            ('Sellante', NULL),
+            ('Diastema', NULL),
+            ('Apiñamiento', NULL),
+            ('Abrasión', NULL),
+            ('Erosión', NULL),
+            ('Abfracción', NULL),
+            ('Mancha', NULL),
+            ('Gingivitis', NULL),
+            ('Periodontitis', NULL),
+            ('Cálculo (sarro)', NULL),
+            ('Placa bacteriana', NULL),
+            ('Sensibilidad', NULL),
+            ('Movilidad', NULL),
+            ('Fístula', NULL),
+            ('Absceso', NULL),
+            ('Quiste', NULL),
+            ('Lesión periapical', NULL)
         ");
 
-        $this->addSql("INSERT INTO tooth (id, tooth_number, description) VALUES
-            (1, 11, 'Incisivo central superior derecho'),
-            (2, 21, 'Incisivo central superior izquierdo'),
-            (3, 36, 'Primer molar inferior izquierdo'),
-            (4, 46, 'Primer molar inferior derecho')
+        // Insertar todos los dientes permanentes y temporales
+        $this->addSql("INSERT INTO tooth (tooth_number, description) VALUES
+            -- Dientes permanentes - Cuadrante superior derecho
+            (18, 'Tercer molar superior derecho (muela del juicio)'),
+            (17, 'Segundo molar superior derecho'),
+            (16, 'Primer molar superior derecho'),
+            (15, 'Segundo premolar superior derecho'),
+            (14, 'Primer premolar superior derecho'),
+            (13, 'Canino superior derecho'),
+            (12, 'Incisivo lateral superior derecho'),
+            (11, 'Incisivo central superior derecho'),
+            -- Cuadrante superior izquierdo
+            (21, 'Incisivo central superior izquierdo'),
+            (22, 'Incisivo lateral superior izquierdo'),
+            (23, 'Canino superior izquierdo'),
+            (24, 'Primer premolar superior izquierdo'),
+            (25, 'Segundo premolar superior izquierdo'),
+            (26, 'Primer molar superior izquierdo'),
+            (27, 'Segundo molar superior izquierdo'),
+            (28, 'Tercer molar superior izquierdo (muela del juicio)'),
+            -- Cuadrante inferior izquierdo
+            (31, 'Incisivo central inferior izquierdo'),
+            (32, 'Incisivo lateral inferior izquierdo'),
+            (33, 'Canino inferior izquierdo'),
+            (34, 'Primer premolar inferior izquierdo'),
+            (35, 'Segundo premolar inferior izquierdo'),
+            (36, 'Primer molar inferior izquierdo'),
+            (37, 'Segundo molar inferior izquierdo'),
+            (38, 'Tercer molar inferior izquierdo (muela del juicio)'),
+            -- Cuadrante inferior derecho
+            (41, 'Incisivo central inferior derecho'),
+            (42, 'Incisivo lateral inferior derecho'),
+            (43, 'Canino inferior derecho'),
+            (44, 'Primer premolar inferior derecho'),
+            (45, 'Segundo premolar inferior derecho'),
+            (46, 'Primer molar inferior derecho'),
+            (47, 'Segundo molar inferior derecho'),
+            (48, 'Tercer molar inferior derecho (muela del juicio)'),
+            -- Dientes temporales - Cuadrante superior derecho
+            (55, 'Segundo molar temporal superior derecho'),
+            (54, 'Primer molar temporal superior derecho'),
+            (53, 'Canino temporal superior derecho'),
+            (52, 'Incisivo lateral temporal superior derecho'),
+            (51, 'Incisivo central temporal superior derecho'),
+            -- Cuadrante superior izquierdo
+            (61, 'Incisivo central temporal superior izquierdo'),
+            (62, 'Incisivo lateral temporal superior izquierdo'),
+            (63, 'Canino temporal superior izquierdo'),
+            (64, 'Primer molar temporal superior izquierdo'),
+            (65, 'Segundo molar temporal superior izquierdo'),
+            -- Cuadrante inferior izquierdo
+            (71, 'Incisivo central temporal inferior izquierdo'),
+            (72, 'Incisivo lateral temporal inferior izquierdo'),
+            (73, 'Canino temporal inferior izquierdo'),
+            (74, 'Primer molar temporal inferior izquierdo'),
+            (75, 'Segundo molar temporal inferior izquierdo'),
+            -- Cuadrante inferior derecho
+            (81, 'Incisivo central temporal inferior derecho'),
+            (82, 'Incisivo lateral temporal inferior derecho'),
+            (83, 'Canino temporal inferior derecho'),
+            (84, 'Primer molar temporal inferior derecho'),
+            (85, 'Segundo molar temporal inferior derecho')
+        ");
+
+        // Insertar usuario administrador
+        $this->addSql("INSERT INTO users (name, email, roles, password) VALUES
+            ('admin', 'admin@gmail.com', '[\"ROLE_ADMIN\"]', '\$2y\$13\$wF3KSdnulnp/YDCOLy982.0KIeA3NpcxI8wblWmZqsOQXVD7NOPrm')
         ");
 
         $this->addSql("INSERT INTO patient (id, first_name, last_name, national_id, social_security_number, phone, email, address, billing_data, health_status, family_history, lifestyle_habits, medication_allergies, registration_date, profile_image_name, updated_at, dentist_id) VALUES
@@ -100,12 +190,12 @@ final class Version20260224145704 extends AbstractMigration
             (5, 5, 5)
         ");
 
-        $this->addSql("INSERT INTO tooth_pathology (id, tooth_face, status, odontogram_id, tooth_id, pathology_id) VALUES
-            (1, 1, 'active', 1, 1, 1),
-            (2, 2, 'active', 2, 3, 2),
-            (3, 3, 'active', 3, 2, 1),
-            (4, 4, 'active', 4, 4, 3),
-            (5, 5, 'active', 5, 1, 1)
+        $this->addSql("INSERT INTO tooth_pathology (tooth_face, status, odontogram_id, tooth_id, pathology_id) VALUES
+            (1, 'active', 1, (SELECT id FROM tooth WHERE tooth_number = 11 LIMIT 1), (SELECT id FROM pathology WHERE description = 'Caries' LIMIT 1)),
+            (2, 'active', 2, (SELECT id FROM tooth WHERE tooth_number = 36 LIMIT 1), (SELECT id FROM pathology WHERE description = 'Fractura' LIMIT 1)),
+            (3, 'active', 3, (SELECT id FROM tooth WHERE tooth_number = 21 LIMIT 1), (SELECT id FROM pathology WHERE description = 'Caries' LIMIT 1)),
+            (4, 'active', 4, (SELECT id FROM tooth WHERE tooth_number = 46 LIMIT 1), (SELECT id FROM pathology WHERE description = 'Gingivitis' LIMIT 1)),
+            (5, 'active', 5, (SELECT id FROM tooth WHERE tooth_number = 11 LIMIT 1), (SELECT id FROM pathology WHERE description = 'Caries' LIMIT 1))
         ");
 
         $this->addSql("INSERT INTO document (id, type, file_url, capture_date, patient_id) VALUES
