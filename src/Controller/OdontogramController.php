@@ -14,7 +14,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-#[Route('/api/odontogram')]
+#[Route('/api/odontograms')]
 class OdontogramController extends AbstractController
 {
     public function __construct(
