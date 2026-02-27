@@ -24,7 +24,7 @@ class Patient
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['patient:read'])]
+    #[Groups(['patient:read', 'odontogram:read'])]
     private ?int $id = null;
 
     #[Assert\NotBlank(message: "First name is required.")]
