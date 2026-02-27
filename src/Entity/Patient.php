@@ -30,13 +30,13 @@ class Patient
     #[Assert\NotBlank(message: "First name is required.")]
     #[Assert\Length(min: 2, max: 100)]
     #[ORM\Column(length: 100)]
-    #[Groups(['patient:read', 'patient:write'])]
+    #[Groups(['patient:read', 'patient:write', 'odontogram:read'])]
     private ?string $firstName = null;
 
     #[Assert\NotBlank(message: "Last name is required.")]
     #[Assert\Length(min: 2, max: 100)]
     #[ORM\Column(length: 100)]
-    #[Groups(['patient:read', 'patient:write'])]
+    #[Groups(['patient:read', 'patient:write', 'odontogram:read'])]
     private ?string $lastName = null;
 
     #[Assert\NotBlank(message: "National ID is required.")]
