@@ -88,7 +88,7 @@ class UserController extends AbstractController
         $users = $this->userRepository->findAll();
 
         $data = array_map(
-            static fn (User $user): array => [
+            static fn(User $user): array => [
                 'id' => $user->getId(),
                 'name' => $user->getName(),
                 'email' => $user->getEmail(),
@@ -165,77 +165,92 @@ class UserController extends AbstractController
     }
 
     #[Route('/{id}', methods: ['PUT', 'PATCH'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function update(int $id, Request $request): JsonResponse
     {
-        $user = $this->userRepository->find($id);
-        if (!$user instanceof User) {
-            return new JsonResponse(['error' => 'User not found.'], Response::HTTP_NOT_FOUND);
+        /** @var User $currentUser */
+        $currentUser = $this->getUser();
+        $userToUpdate = $this->userRepository->find($id);
+
+        if (!$userToUpdate || $currentUser->getId() !== $userToUpdate->getId()) {
+            return new JsonResponse(['error' => 'No autorizado'], Response::HTTP_FORBIDDEN);
         }
 
         $payload = json_decode($request->getContent(), true);
-        if (!is_array($payload)) {
-            return new JsonResponse(['error' => 'Invalid JSON body.'], Response::HTTP_BAD_REQUEST);
+
+        if (isset($payload['name'])) {
+            $userToUpdate->setName($payload['name']);
         }
 
-        if (array_key_exists('name', $payload)) {
-            $name = trim((string) $payload['name']);
-            if ($name == '') {
-                return new JsonResponse(['error' => 'Name cannot be empty.'], Response::HTTP_BAD_REQUEST);
+        if (isset($payload['email'])) {
+            // Validar si el email ya existe en otro usuario
+            $existing = $this->userRepository->findOneBy(['email' => $payload['email']]);
+            if ($existing && $existing->getId() !== $userToUpdate->getId()) {
+                return new JsonResponse(['error' => 'El email ya está en uso'], Response::HTTP_CONFLICT);
             }
-            $user->setName($name);
-        }
-
-        if (array_key_exists('email', $payload)) {
-            $email = trim((string) $payload['email']);
-            if ($email == '') {
-                return new JsonResponse(['error' => 'Email cannot be empty.'], Response::HTTP_BAD_REQUEST);
-            }
-            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                return new JsonResponse(['error' => 'Invalid email format.'], Response::HTTP_BAD_REQUEST);
-            }
-            $existing = $this->userRepository->findOneBy(['email' => $email]);
-            if ($existing instanceof User && $existing->getId() !== $user->getId()) {
-                return new JsonResponse(['error' => 'Email already registered.'], Response::HTTP_CONFLICT);
-            }
-            $user->setEmail($email);
-        }
-
-        if (array_key_exists('roles', $payload)) {
-            if (!is_array($payload['roles'])) {
-                return new JsonResponse(['error' => 'Roles must be an array.'], Response::HTTP_BAD_REQUEST);
-            }
-            $user->setRoles($payload['roles']);
-        }
-
-        if (array_key_exists('password', $payload)) {
-            $plainPassword = (string) $payload['password'];
-            if ($plainPassword == '') {
-                return new JsonResponse(['error' => 'Password cannot be empty.'], Response::HTTP_BAD_REQUEST);
-            }
-            $user->setPassword($this->passwordHasher->hashPassword($user, $plainPassword));
+            $userToUpdate->setEmail($payload['email']);
         }
 
         $this->entityManager->flush();
 
         return new JsonResponse([
-            'id' => $user->getId(),
-            'name' => $user->getName(),
-            'email' => $user->getEmail(),
-            'roles' => $user->getRoles(),
+            'id' => $userToUpdate->getId(),
+            'name' => $userToUpdate->getName(),
+            'email' => $userToUpdate->getEmail()
         ]);
     }
 
     #[Route('/{id}', methods: ['DELETE'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+
     public function delete(int $id): JsonResponse
     {
-        $user = $this->userRepository->find($id);
-        if (!$user instanceof User) {
-            return new JsonResponse(['error' => 'User not found.'], Response::HTTP_NOT_FOUND);
+        /** @var User $currentUser */
+        $currentUser = $this->getUser();
+        $userToDelete = $this->userRepository->find($id);
+
+        if (!$userToDelete) {
+            return new JsonResponse(['error' => 'Usuario no encontrado'], 404);
         }
 
-        $this->entityManager->remove($user);
+        if ($currentUser->getId() !== $userToDelete->getId()) {
+            return new JsonResponse(['error' => 'No tienes permiso para borrar esta cuenta'], 403);
+        }
+
+        $this->entityManager->remove($userToDelete);
         $this->entityManager->flush();
 
-        return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+        return new JsonResponse(['message' => 'Cuenta eliminada'], 200);
+
+    }
+
+    #[Route('/{id}/password', methods: ['POST'])] // Usamos POST porque es una "acción"
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    public function changePassword(int $id, Request $request, UserPasswordHasherInterface $hasher): JsonResponse
+    {
+        /** @var User $currentUser */
+        $currentUser = $this->getUser();
+        $user = $this->userRepository->find($id);
+
+        if (!$user || $currentUser->getId() !== $user->getId()) {
+            return new JsonResponse(['error' => 'No autorizado'], 403);
+        }
+
+        $data = json_decode($request->getContent(), true);
+        $currentPassword = $data['currentPassword'] ?? '';
+        $newPassword = $data['newPassword'] ?? '';
+
+        if (!$currentPassword || !$newPassword) {
+            return new JsonResponse(['error' => 'Faltan datos obligatorios'], 400);
+        }
+
+        if (!$hasher->isPasswordValid($user, $currentPassword)) {
+            return new JsonResponse(['error' => 'La contraseña actual no es correcta.'], 401);
+        }
+
+        $user->setPassword($hasher->hashPassword($user, $newPassword));
+        $this->entityManager->flush();
+
+        return new JsonResponse(['message' => 'Contraseña actualizada correctamente']);
     }
 }
