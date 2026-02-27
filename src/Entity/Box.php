@@ -6,6 +6,7 @@ use App\Repository\BoxRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: BoxRepository::class)]
 class Box
@@ -13,15 +14,19 @@ class Box
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['box:read', 'appointment:read', 'dentist:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['box:read', 'box:write', 'appointment:read', 'dentist:read'])]
     private ?string $name = null;
 
     #[ORM\Column]
+    #[Groups(['box:read', 'box:write'])]
     private ?int $capacity = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['box:read', 'box:write'])]
     private ?string $status = null;
 
     #[ORM\OneToMany(mappedBy: 'box', targetEntity: Dentist::class)]
