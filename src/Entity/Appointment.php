@@ -3,39 +3,51 @@
 namespace App\Entity;
 
 use App\Repository\AppointmentRepository;
+use App\Validator\DentistAvailableDay;
+use App\Validator\UniqueBoxTimeSlot;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: AppointmentRepository::class)]
+#[UniqueBoxTimeSlot]
+#[DentistAvailableDay]
 class Appointment
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['appointment:read'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(targetEntity: Patient::class)]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['appointment:read', 'appointment:write'])]
     private ?Patient $patient = null;
 
     #[ORM\ManyToOne(targetEntity: Dentist::class)]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['appointment:read', 'appointment:write'])]
     private ?Dentist $dentist = null;
 
     #[ORM\ManyToOne(targetEntity: Box::class)]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['appointment:read', 'appointment:write'])]
     private ?Box $box = null;
 
     #[ORM\ManyToOne(targetEntity: Treatment::class)]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['appointment:read', 'appointment:write'])]
     private ?Treatment $treatment = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[Groups(['appointment:read', 'appointment:write'])]
     private ?\DateTimeInterface $visitDate = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(['appointment:read', 'appointment:write'])]
     private ?string $consultationReason = null;
 
     #[ORM\ManyToOne(targetEntity: self::class, inversedBy: 'relatedAppointments')]

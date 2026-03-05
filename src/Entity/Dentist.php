@@ -19,7 +19,7 @@ class Dentist implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['dentist:read'])]
+    #[Groups(['dentist:read', 'appointment:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 180, unique: true)]
@@ -38,19 +38,19 @@ class Dentist implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $password = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['dentist:read', 'dentist:write'])]
+    #[Groups(['dentist:read', 'dentist:write', 'appointment:read'])]
     private ?string $firstName = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['dentist:read', 'dentist:write'])]
+    #[Groups(['dentist:read', 'dentist:write', 'appointment:read'])]
     private ?string $lastName = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['dentist:read', 'dentist:write'])]
+    #[Groups(['dentist:read', 'dentist:write', 'appointment:read'])]
     private ?string $specialty = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['dentist:read', 'dentist:write'])]
+    #[Groups(['dentist:read', 'dentist:write', 'appointment:read'])]
     private ?string $availableDays = null;
 
     #[ORM\Column(length: 255, nullable: true)]

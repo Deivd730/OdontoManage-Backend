@@ -3,8 +3,11 @@
 namespace App\Controller;
 
 use App\Entity\Odontogram;
+use App\Repository\AppointmentRepository;
 use App\Repository\OdontogramRepository;
+use App\Repository\PathologyRepository;
 use App\Repository\PatientRepository;
+use App\Repository\ToothRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -20,6 +23,9 @@ class OdontogramController extends AbstractController
     public function __construct(
         private OdontogramRepository $odontogramRepository,
         private PatientRepository $patientRepository,
+        private AppointmentRepository $appointmentRepository,
+        private ToothRepository $toothRepository,
+        private PathologyRepository $pathologyRepository,
         private EntityManagerInterface $entityManager,
         private SerializerInterface $serializer,
         private ValidatorInterface $validator,
@@ -62,12 +68,65 @@ class OdontogramController extends AbstractController
     public function create(Request $request): JsonResponse
     {
         try {
-            $odontogram = $this->serializer->deserialize(
-                $request->getContent(),
-                Odontogram::class,
-                'json',
-                ['groups' => 'odontogram:write']
-            );
+            $data = json_decode($request->getContent(), true);
+            
+            $odontogram = new Odontogram();
+            
+            // Handle patient
+            if (isset($data['patient'])) {
+                $patientId = is_numeric($data['patient']) ? $data['patient'] : null;
+                if ($patientId) {
+                    $patient = $this->patientRepository->find($patientId);
+                    if (!$patient) {
+                        return new JsonResponse(['error' => 'Patient not found'], Response::HTTP_NOT_FOUND);
+                    }
+                    $odontogram->setPatient($patient);
+                }
+            }
+            
+            // Handle appointment (optional)
+            if (isset($data['appointment']) && $data['appointment'] !== null) {
+                $appointmentId = is_numeric($data['appointment']) ? $data['appointment'] : null;
+                if ($appointmentId) {
+                    $appointment = $this->appointmentRepository->find($appointmentId);
+                    if ($appointment) {
+                        $odontogram->setAppointment($appointment);
+                    }
+                }
+            }
+            
+            // Handle toothPathologies
+            if (isset($data['toothPathologies']) && is_array($data['toothPathologies'])) {
+                foreach ($data['toothPathologies'] as $tpData) {
+                    $toothPathology = new \App\Entity\ToothPathology();
+                    
+                    // Get tooth
+                    if (isset($tpData['tooth'])) {
+                        $tooth = $this->toothRepository->find($tpData['tooth']);
+                        if ($tooth) {
+                            $toothPathology->setTooth($tooth);
+                        }
+                    }
+                    
+                    // Get pathology
+                    if (isset($tpData['pathology'])) {
+                        $pathology = $this->pathologyRepository->find($tpData['pathology']);
+                        if ($pathology) {
+                            $toothPathology->setPathology($pathology);
+                        }
+                    }
+                    
+                    // Set other fields
+                    if (isset($tpData['toothFace'])) {
+                        $toothPathology->setToothFace($tpData['toothFace']);
+                    }
+                    if (isset($tpData['status'])) {
+                        $toothPathology->setStatus($tpData['status']);
+                    }
+                    
+                    $odontogram->addToothPathology($toothPathology);
+                }
+            }
 
             $errors = $this->validator->validate($odontogram);
             if (count($errors) > 0) {
