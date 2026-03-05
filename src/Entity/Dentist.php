@@ -57,14 +57,6 @@ class Dentist implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups(['dentist:read', 'dentist:write'])]
     private ?string $phone = null;
 
-    #[Vich\UploadableField(mapping: 'profile_images', fileNameProperty: 'profileImageName')]
-    #[Groups(['dentist:write'])]
-    private ?File $profileImageFile = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['dentist:read'])]
-    private ?string $profileImageName = null;
-
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $updatedAt = null;
 
@@ -214,30 +206,6 @@ class Dentist implements UserInterface, PasswordAuthenticatedUserInterface
         $this->phone = $phone;
 
         return $this;
-    }
-
-    public function setProfileImageFile(?File $profileImageFile = null): void
-    {
-        $this->profileImageFile = $profileImageFile;
-
-        if (null !== $profileImageFile) {
-            $this->updatedAt = new \DateTimeImmutable();
-        }
-    }
-
-    public function getProfileImageFile(): ?File
-    {
-        return $this->profileImageFile;
-    }
-
-    public function setProfileImageName(?string $profileImageName): void
-    {
-        $this->profileImageName = $profileImageName;
-    }
-
-    public function getProfileImageName(): ?string
-    {
-        return $this->profileImageName;
     }
 
     public function getUpdatedAt(): ?\DateTimeImmutable

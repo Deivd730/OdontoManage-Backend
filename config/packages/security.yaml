@@ -1,9 +1,7 @@
 security:
     password_hashers:
         App\Entity\User:
-            algorithm: auto
-        App\Entity\Dentist:
-            algorithm: auto
+            algorithm: auto        
 
     providers:
         app_user_provider:

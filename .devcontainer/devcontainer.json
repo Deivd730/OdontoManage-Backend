@@ -1,0 +1,25 @@
+{
+	"name": "OdontoManage Backend (Symfony 7.4)",
+	"image": "mcr.microsoft.com/devcontainers/php:1-8.3-bookworm",
+	"features": {		
+		"ghcr.io/shyim/devcontainers-features/symfony-cli:0": {},
+		
+		"ghcr.io/devcontainers-extra/features/php-extension:1": {
+			"extension": "pdo_mysql,intl,gd,zip"
+		}
+	},
+	
+	"forwardPorts": [8000, 3306],
+		
+	"postCreateCommand": "composer install",
+	
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"bmewburn.vscode-intelephense-client", 
+				"symfony.symfony-vscode-plugin",      
+				"xdebug.php-debug"                     
+			]
+		}
+	}
+}
