@@ -79,6 +79,17 @@ class OdontogramController extends AbstractController
                 $odontogram->setPatient($patient);
             }
             
+           
+            if (isset($data['appointment'])) {
+                $appointmentData = $data['appointment'];
+                $appointmentId = is_array($appointmentData) ? $appointmentData['id'] : (is_numeric($appointmentData) ? $appointmentData : basename($appointmentData));
+                $appointment = $this->appointmentRepository->find($appointmentId);
+                if (!$appointment) {
+                    return new JsonResponse(['error' => 'Appointment not found'], 404);
+                }
+                $odontogram->setAppointment($appointment);
+            }
+            
             if (isset($data['toothPathologies']) && is_array($data['toothPathologies'])) {
                 foreach ($data['toothPathologies'] as $tpData) {
                     $toothPathology = new \App\Entity\ToothPathology();
