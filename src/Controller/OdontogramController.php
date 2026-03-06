@@ -69,82 +69,46 @@ class OdontogramController extends AbstractController
     {
         try {
             $data = json_decode($request->getContent(), true);
-            
             $odontogram = new Odontogram();
-            
-            // Handle patient
+                        
             if (isset($data['patient'])) {
-                $patientId = is_numeric($data['patient']) ? $data['patient'] : null;
-                if ($patientId) {
-                    $patient = $this->patientRepository->find($patientId);
-                    if (!$patient) {
-                        return new JsonResponse(['error' => 'Patient not found'], Response::HTTP_NOT_FOUND);
-                    }
-                    $odontogram->setPatient($patient);
-                }
+                $pData = $data['patient'];
+                $patientId = is_array($pData) ? $pData['id'] : (is_numeric($pData) ? $pData : basename($pData));
+                $patient = $this->patientRepository->find($patientId);
+                if (!$patient) return new JsonResponse(['error' => 'Patient not found'], 404);
+                $odontogram->setPatient($patient);
             }
             
-            // Handle appointment (optional)
-            if (isset($data['appointment']) && $data['appointment'] !== null) {
-                $appointmentId = is_numeric($data['appointment']) ? $data['appointment'] : null;
-                if ($appointmentId) {
-                    $appointment = $this->appointmentRepository->find($appointmentId);
-                    if ($appointment) {
-                        $odontogram->setAppointment($appointment);
-                    }
-                }
-            }
-            
-            // Handle toothPathologies
             if (isset($data['toothPathologies']) && is_array($data['toothPathologies'])) {
                 foreach ($data['toothPathologies'] as $tpData) {
                     $toothPathology = new \App\Entity\ToothPathology();
-                    
-                    // Get tooth
-                    if (isset($tpData['tooth'])) {
-                        $tooth = $this->toothRepository->find($tpData['tooth']);
-                        if ($tooth) {
-                            $toothPathology->setTooth($tooth);
-                        }
+
+                    $toothNumber = $tpData['tooth']['toothNumber'] ?? null;
+                    $tooth = $this->toothRepository->findOneBy(['toothNumber' => $toothNumber]);
+                    if (!$tooth) {
+                        return new JsonResponse(['error' => "El diente número $toothNumber no existe en la base de datos"], 400);
                     }
-                    
-                    // Get pathology
-                    if (isset($tpData['pathology'])) {
-                        $pathology = $this->pathologyRepository->find($tpData['pathology']);
-                        if ($pathology) {
-                            $toothPathology->setPathology($pathology);
-                        }
+
+                    $pathologyId = $tpData['pathology']['id'] ?? null;
+                    $pathology = $this->pathologyRepository->find($pathologyId);
+                    if (!$pathology) {
+                        return new JsonResponse(['error' => "La patología ID $pathologyId no existe"], 400);
                     }
-                    
-                    // Set other fields
-                    if (isset($tpData['toothFace'])) {
-                        $toothPathology->setToothFace($tpData['toothFace']);
-                    }
-                    if (isset($tpData['status'])) {
-                        $toothPathology->setStatus($tpData['status']);
-                    }
-                    
+
+                    $toothPathology->setTooth($tooth);
+                    $toothPathology->setPathology($pathology);
+                    $toothPathology->setToothFace($tpData['toothFace'] ?? 0);
+                    $toothPathology->setStatus($tpData['status'] ?? 'Activo');
                     $odontogram->addToothPathology($toothPathology);
                 }
             }
 
-            $errors = $this->validator->validate($odontogram);
-            if (count($errors) > 0) {
-                $errorMessages = [];
-                foreach ($errors as $error) {
-                    $errorMessages[$error->getPropertyPath()] = $error->getMessage();
-                }
+        $this->entityManager->persist($odontogram);
+        $this->entityManager->flush();
 
-                return new JsonResponse(['errors' => $errorMessages], Response::HTTP_BAD_REQUEST);
-            }
-
-            $this->entityManager->persist($odontogram);
-            $this->entityManager->flush();
-
-            $data = $this->serializer->serialize($odontogram, 'json', ['groups' => 'odontogram:read']);
-
-            return JsonResponse::fromJsonString($data, Response::HTTP_CREATED);
-        } catch (\Exception $e) {
+        $data = $this->serializer->serialize($odontogram, 'json', ['groups' => 'odontogram:read']);
+        return JsonResponse::fromJsonString($data, Response::HTTP_CREATED);
+    } catch (\Exception $e) {
             return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
         }
     }
@@ -153,32 +117,53 @@ class OdontogramController extends AbstractController
     public function update(Odontogram $odontogram, Request $request): JsonResponse
     {
         try {
-            $this->serializer->deserialize(
-                $request->getContent(),
-                Odontogram::class,
-                'json',
-                ['object_to_populate' => $odontogram, 'groups' => 'odontogram:write']
-            );
-
-            $errors = $this->validator->validate($odontogram);
-            if (count($errors) > 0) {
-                $errorMessages = [];
-                foreach ($errors as $error) {
-                    $errorMessages[$error->getPropertyPath()] = $error->getMessage();
-                }
-
-                return new JsonResponse(['errors' => $errorMessages], Response::HTTP_BAD_REQUEST);
+            $data = json_decode($request->getContent(), true);
+            if (!$data) {
+                return new JsonResponse(['error' => 'JSON inválido'], Response::HTTP_BAD_REQUEST);
             }
+            
+            foreach ($odontogram->getToothPathologies()->toArray() as $existingTp) {
+                $odontogram->removeToothPathology($existingTp);
+                $this->entityManager->remove($existingTp);      
+            }            
+                        
+            if (isset($data['toothPathologies']) && is_array($data['toothPathologies'])) {
+                foreach ($data['toothPathologies'] as $tpData) {
+                    $toothPathology = new \App\Entity\ToothPathology();
+                    
+                    $toothNumber = $tpData['tooth']['toothNumber'] ?? null;
+                    $tooth = $this->toothRepository->findOneBy(['toothNumber' => $toothNumber]);
+                    
+                    if (!$tooth) {
+                        return new JsonResponse(['error' => "El diente número $toothNumber no existe en la base de datos"], 400);
+                    }
+                    
+                    $pathologyId = $tpData['pathology']['id'] ?? null;
+                    $pathology = $this->pathologyRepository->find($pathologyId);
+                    
+                    if (!$pathology) {
+                        return new JsonResponse(['error' => "La patología ID $pathologyId no existe"], 400);
+                    }
 
+                    $toothPathology->setTooth($tooth);
+                    $toothPathology->setPathology($pathology);
+                    $toothPathology->setToothFace($tpData['toothFace'] ?? 0);
+                    $toothPathology->setStatus($tpData['status'] ?? 'Activo');
+                    
+                    $odontogram->addToothPathology($toothPathology);
+                }
+            }
+            
             $this->entityManager->flush();
 
-            $data = $this->serializer->serialize($odontogram, 'json', ['groups' => 'odontogram:read']);
+            $json = $this->serializer->serialize($odontogram, 'json', ['groups' => 'odontogram:read']);
+            return JsonResponse::fromJsonString($json);
 
-            return JsonResponse::fromJsonString($data);
-        } catch (\Exception $e) {
-            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
+        } catch (\Exception $e) {            
+            return new JsonResponse(['error' => 'Excepción: ' . $e->getMessage()], Response::HTTP_BAD_REQUEST);
         }
     }
+
 
     #[Route('/{id}', methods: ['PATCH'])]
     public function patch(Odontogram $odontogram, Request $request): JsonResponse
