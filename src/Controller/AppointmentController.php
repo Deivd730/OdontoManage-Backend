@@ -4,6 +4,9 @@ namespace App\Controller;
 
 use App\Entity\Appointment;
 use App\Repository\AppointmentRepository;
+use App\Repository\BoxRepository;
+use App\Repository\DentistRepository;
+use App\Repository\PatientRepository;
 use App\Repository\TreatmentRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -20,6 +23,9 @@ class AppointmentController extends AbstractController
     public function __construct(
         private AppointmentRepository $appointmentRepository,
         private TreatmentRepository $treatmentRepository,
+        private PatientRepository $patientRepository,
+        private DentistRepository $dentistRepository,
+        private BoxRepository $boxRepository,
         private EntityManagerInterface $entityManager,
         private SerializerInterface $serializer,
         private ValidatorInterface $validator,
@@ -103,12 +109,40 @@ class AppointmentController extends AbstractController
     public function create(Request $request): JsonResponse
     {
         try {
-            $appointment = $this->serializer->deserialize(
-                $request->getContent(),
-                Appointment::class,
-                'json',
-                ['groups' => 'appointment:write']
-            );
+            $data = json_decode($request->getContent(), true);
+
+            // Manually fetch entities to ensure they're fully loaded
+            $patient = $this->patientRepository->find($data['patient'] ?? null);
+            $dentist = $this->dentistRepository->find($data['dentist'] ?? null);
+            $box = $this->boxRepository->find($data['box'] ?? null);
+            $treatment = $this->treatmentRepository->find($data['treatment'] ?? null);
+
+            if (!$patient) {
+                return new JsonResponse(['error' => 'Patient not found'], Response::HTTP_BAD_REQUEST);
+            }
+            if (!$dentist) {
+                return new JsonResponse(['error' => 'Dentist not found'], Response::HTTP_BAD_REQUEST);
+            }
+            if (!$box) {
+                return new JsonResponse(['error' => 'Box not found'], Response::HTTP_BAD_REQUEST);
+            }
+            if (!$treatment) {
+                return new JsonResponse(['error' => 'Treatment not found'], Response::HTTP_BAD_REQUEST);
+            }
+
+            $appointment = new Appointment();
+            $appointment->setPatient($patient);
+            $appointment->setDentist($dentist);
+            $appointment->setBox($box);
+            $appointment->setTreatment($treatment);
+            
+            if (isset($data['visitDate'])) {
+                $appointment->setVisitDate(new \DateTime($data['visitDate']));
+            }
+            
+            if (isset($data['consultationReason'])) {
+                $appointment->setConsultationReason($data['consultationReason']);
+            }
 
             $errors = $this->validator->validate($appointment);
             if (count($errors) > 0) {

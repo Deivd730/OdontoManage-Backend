@@ -34,10 +34,15 @@ class UniqueBoxTimeSlotValidator extends ConstraintValidator
             return;
         }
 
+        $durationMinutes = $treatment->getDurationMinutes();
+        if (!$durationMinutes) {
+            return; // Cannot validate without duration
+        }
+
         // Calculate end time based on treatment duration
         $startTime = \DateTime::createFromInterface($visitDate);
         $endTime = \DateTime::createFromInterface($visitDate);
-        $endTime->modify('+' . $treatment->getDurationMinutes() . ' minutes');
+        $endTime->modify('+' . $durationMinutes . ' minutes');
 
         // Find overlapping appointments for the same box
         $qb = $this->appointmentRepository->createQueryBuilder('a')
