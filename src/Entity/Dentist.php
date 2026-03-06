@@ -10,10 +10,10 @@ use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Attribute\Groups;
-use Vich\UploaderBundle\Mapping\Annotation as Vich;
+use Vich\UploaderBundle\Mapping\Attribute\Uploadable;
 
 #[ORM\Entity(repositoryClass: DentistRepository::class)]
-#[Vich\Uploadable]
+#[Uploadable]
 class Dentist implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]

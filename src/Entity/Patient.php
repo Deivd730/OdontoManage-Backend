@@ -10,9 +10,10 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Serializer\Attribute\Groups;
-use Vich\UploaderBundle\Mapping\Annotation as Vich;
+use Vich\UploaderBundle\Mapping\Attribute\Uploadable;
+use Vich\UploaderBundle\Mapping\Attribute\UploadableField;
 
-#[Vich\Uploadable]
+#[Uploadable]
 #[ORM\Entity(repositoryClass: PatientRepository::class)]
 #[ORM\Table(
     uniqueConstraints: [
@@ -24,19 +25,19 @@ class Patient
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['patient:read', 'odontogram:read'])]
+    #[Groups(['patient:read', 'odontogram:read', 'appointment:read'])]
     private ?int $id = null;
 
     #[Assert\NotBlank(message: "First name is required.")]
     #[Assert\Length(min: 2, max: 100)]
     #[ORM\Column(length: 100)]
-    #[Groups(['patient:read', 'patient:write', 'odontogram:read'])]
+    #[Groups(['patient:read', 'patient:write', 'odontogram:read', 'appointment:read'])]
     private ?string $firstName = null;
 
     #[Assert\NotBlank(message: "Last name is required.")]
     #[Assert\Length(min: 2, max: 100)]
     #[ORM\Column(length: 100)]
-    #[Groups(['patient:read', 'patient:write', 'odontogram:read'])]
+    #[Groups(['patient:read', 'patient:write', 'odontogram:read', 'appointment:read'])]
     private ?string $lastName = null;
 
     #[Assert\NotBlank(message: "National ID is required.")]
@@ -89,7 +90,7 @@ class Patient
     #[Groups(['patient:read', 'patient:write'])]
     private ?\DateTimeImmutable $registrationDate = null;
 
-    #[Vich\UploadableField(mapping: 'profile_images', fileNameProperty: 'profileImageName')]
+    #[UploadableField(mapping: 'profile_images', fileNameProperty: 'profileImageName')]
     #[Groups(['patient:write'])]
     private ?File $profileImageFile = null;
 
