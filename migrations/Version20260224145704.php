@@ -21,7 +21,7 @@ final class Version20260224145704 extends AbstractMigration
     {
         // this up() migration is auto-generated, please modify it to your needs
         $this->addSql('CREATE TABLE appointment (id INT AUTO_INCREMENT NOT NULL, visit_date DATETIME NOT NULL, consultation_reason LONGTEXT DEFAULT NULL, patient_id INT NOT NULL, dentist_id INT NOT NULL, box_id INT NOT NULL, treatment_id INT NOT NULL, parent_appointment_id INT DEFAULT NULL, INDEX IDX_FE38F8446B899279 (patient_id), INDEX IDX_FE38F8441CE0A142 (dentist_id), INDEX IDX_FE38F844D8177B3F (box_id), INDEX IDX_FE38F844471C0366 (treatment_id), INDEX IDX_FE38F844FB6847F2 (parent_appointment_id), PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci`');
-        $this->addSql('CREATE TABLE box (id INT AUTO_INCREMENT NOT NULL, name VARCHAR(255) NOT NULL, capacity INT NOT NULL, status VARCHAR(255) NOT NULL, PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci`');
+        $this->addSql('CREATE TABLE box (id INT AUTO_INCREMENT NOT NULL, name VARCHAR(255) NOT NULL, status VARCHAR(255) NOT NULL, PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci`');
         $this->addSql('CREATE TABLE dentist (id INT AUTO_INCREMENT NOT NULL, email VARCHAR(180) NOT NULL, roles JSON NOT NULL, password VARCHAR(255) NOT NULL, first_name VARCHAR(255) NOT NULL, last_name VARCHAR(255) NOT NULL, specialty VARCHAR(255) DEFAULT NULL, available_days VARCHAR(255) DEFAULT NULL, phone VARCHAR(255) DEFAULT NULL, updated_at DATETIME DEFAULT NULL, box_id INT DEFAULT NULL, UNIQUE INDEX UNIQ_6C8FB839E7927C74 (email), INDEX IDX_6C8FB839D8177B3F (box_id), PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci`');
         $this->addSql('CREATE TABLE document (id INT AUTO_INCREMENT NOT NULL, type VARCHAR(255) NOT NULL, file_url VARCHAR(255) NOT NULL, capture_date DATE NOT NULL, patient_id INT NOT NULL, INDEX IDX_D8698A766B899279 (patient_id), PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci`');
         $this->addSql('CREATE TABLE odontogram (id INT AUTO_INCREMENT NOT NULL, patient_id INT NOT NULL, appointment_id INT DEFAULT NULL, INDEX IDX_251BF9406B899279 (patient_id), INDEX IDX_251BF940E5B533F9 (appointment_id), PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci`');
@@ -46,15 +46,17 @@ final class Version20260224145704 extends AbstractMigration
         $this->addSql('ALTER TABLE tooth_pathology ADD CONSTRAINT FK_17639292A2A44441 FOREIGN KEY (tooth_id) REFERENCES tooth (id)');
         $this->addSql('ALTER TABLE tooth_pathology ADD CONSTRAINT FK_17639292CE86795D FOREIGN KEY (pathology_id) REFERENCES pathology (id)');
 
-        $this->addSql("INSERT INTO box (id, name, capacity, status) VALUES
-            (1, 'Box Norte', 2, 'available'),
-            (2, 'Box Sur', 1, 'available')
+        $this->addSql("INSERT INTO box (id, name, status) VALUES
+            (1, 'Box Norte', 'available'),
+            (2, 'Box Sur', 'available')
         ");
 
         $this->addSql("INSERT INTO dentist (id, email, roles, password, first_name, last_name, specialty, available_days, phone, updated_at, box_id) VALUES
-            (1, 'ana.garcia@clinic.local', '[]', 'hashed_pass_1', 'Ana', 'Garcia', 'Ortodoncia', 'Mon,Wed,Fri', '600111222', '2026-02-24 09:00:00', 1),
-            (2, 'luis.martin@clinic.local', '[]', 'hashed_pass_2', 'Luis', 'Martin', 'Endodoncia', 'Tue,Thu', '600333444', '2026-02-24 09:05:00', 1),
-            (3, 'marta.suarez@clinic.local', '[]', 'hashed_pass_3', 'Marta', 'Suarez', 'Protesis', 'Mon,Thu', '600555666', '2026-02-24 09:10:00', 2)
+            (1, 'ana.garcia@clinic.local', '[]', 'hashed_pass_1', 'Ana', 'Garcia', 'Ortodoncia', 'Mon', '600111222', '2026-02-24 09:00:00', NULL),
+            (2, 'luis.martin@clinic.local', '[]', 'hashed_pass_2', 'Luis', 'Martin', 'Endodoncia', 'Tue', '600333444', '2026-02-24 09:05:00', NULL),
+            (3, 'marta.suarez@clinic.local', '[]', 'hashed_pass_3', 'Marta', 'Suarez', 'Protesis', 'Wed', '600555666', '2026-02-24 09:10:00', NULL),
+            (4, 'pedro.alvarez@clinic.local', '[]', 'hashed_pass_4', 'Pedro', 'Alvarez', 'Implantología', 'Thu', '600777888', '2026-02-24 09:15:00', NULL),
+            (5, 'laura.gomez@clinic.local', '[]', 'hashed_pass_5', 'Laura', 'Gomez', 'Odontopediatría', 'Fri', '600999000', '2026-02-24 09:20:00', NULL)
         ");
 
         $this->addSql("INSERT INTO treatment (id, name, description, duration_minutes) VALUES
@@ -175,11 +177,11 @@ final class Version20260224145704 extends AbstractMigration
         ");
 
         $this->addSql("INSERT INTO appointment (id, visit_date, consultation_reason, patient_id, dentist_id, box_id, treatment_id, parent_appointment_id) VALUES
-            (1, '2026-02-24 11:00:00', 'Revision general', 1, 1, 1, 1, NULL),
-            (2, '2026-02-24 11:30:00', 'Dolor molar', 2, 2, 1, 3, NULL),
-            (3, '2026-02-24 12:00:00', 'Caries', 3, 2, 1, 2, NULL),
-            (4, '2026-02-24 12:30:00', 'Limpieza anual', 4, 3, 2, 1, NULL),
-            (5, '2026-02-24 13:00:00', 'Sensibilidad dental', 5, 1, 1, 2, NULL)
+            (1, '2026-03-09 11:00:00', 'Revision general', 1, 1, 1, 1, NULL),
+            (2, '2026-03-10 11:30:00', 'Dolor molar', 2, 2, 1, 3, NULL),
+            (3, '2026-03-11 12:00:00', 'Caries', 3, 3, 1, 2, NULL),
+            (4, '2026-03-12 12:30:00', 'Limpieza anual', 4, 4, 2, 1, NULL),
+            (5, '2026-03-13 13:00:00', 'Sensibilidad dental', 5, 5, 1, 2, NULL)
         ");
 
         $this->addSql("INSERT INTO odontogram (id, patient_id, appointment_id) VALUES

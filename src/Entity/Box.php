@@ -14,16 +14,12 @@ class Box
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['box:read', 'appointment:read', 'dentist:read'])]
+    #[Groups(['box:read', 'appointment:read', 'dentist:read', 'odontogram:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['box:read', 'box:write', 'appointment:read', 'dentist:read'])]
+    #[Groups(['box:read', 'box:write', 'appointment:read', 'dentist:read', 'odontogram:read'])]
     private ?string $name = null;
-
-    #[ORM\Column]
-    #[Groups(['box:read', 'box:write'])]
-    private ?int $capacity = null;
 
     #[ORM\Column(length: 255)]
     #[Groups(['box:read', 'box:write'])]
@@ -54,18 +50,6 @@ class Box
     public function setName(string $name): static
     {
         $this->name = $name;
-
-        return $this;
-    }
-
-    public function getCapacity(): ?int
-    {
-        return $this->capacity;
-    }
-
-    public function setCapacity(int $capacity): static
-    {
-        $this->capacity = $capacity;
 
         return $this;
     }
