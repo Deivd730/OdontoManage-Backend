@@ -44,33 +44,73 @@ class DocumentController extends AbstractController
     #[Route('', methods: ['POST'])]
     public function upload(Request $request): JsonResponse
     {
-        $patientId = $request->request->get('patient');
-        $type = $request->request->get('type');
-        $captureDate = $request->request->get('captureDate');
-        /** @var UploadedFile|null $file */
-        $file = $request->files->get('documentFile');
+        try {
+            $patientId = $request->request->get('patient');
+            $type = $request->request->get('type');
+            $captureDate = $request->request->get('captureDate');
+            /** @var UploadedFile|null $file */
+            $file = $request->files->get('documentFile');
 
-        $patient = $this->patientRepository->find($patientId);
-        if (!$patient) {
-            return new JsonResponse(['error' => 'Patient not found'], Response::HTTP_NOT_FOUND);
+            if (!$file) {
+                return new JsonResponse(['error' => 'No se ha subido ningún archivo'], Response::HTTP_BAD_REQUEST);
+            }
+
+            // Validar tamaño de archivo (máximo 10MB)
+            $maxSize = 10 * 1024 * 1024; // 10MB en bytes
+            if ($file->getSize() > $maxSize) {
+                return new JsonResponse(
+                    ['error' => 'El archivo es demasiado grande. Tamaño máximo: 10MB'],
+                    Response::HTTP_BAD_REQUEST
+                );
+            }
+
+            // Validar tipo MIME
+            $allowedMimeTypes = [
+                'application/pdf',
+                'image/jpeg',
+                'image/jpg',
+                'image/png',
+                'image/gif'
+            ];
+            if (!in_array($file->getMimeType(), $allowedMimeTypes, true)) {
+                return new JsonResponse(
+                    ['error' => 'Tipo de archivo no permitido. Solo se aceptan PDF e imágenes (JPEG, PNG, GIF)'],
+                    Response::HTTP_BAD_REQUEST
+                );
+            }
+
+            $patient = $this->patientRepository->find($patientId);
+            if (!$patient) {
+                return new JsonResponse(['error' => 'Paciente no encontrado'], Response::HTTP_NOT_FOUND);
+            }
+
+            if (!$type || trim($type) === '') {
+                return new JsonResponse(['error' => 'El tipo de documento es obligatorio'], Response::HTTP_BAD_REQUEST);
+            }
+
+            if (!$captureDate) {
+                return new JsonResponse(['error' => 'La fecha de captura es obligatoria'], Response::HTTP_BAD_REQUEST);
+            }
+
+            $document = new Document();
+            $document->setPatient($patient);
+            $document->setType(trim($type));
+            $document->setCaptureDate(new \DateTime($captureDate));
+            $document->setDocumentFile($file);
+
+            $this->entityManager->persist($document);
+            $this->entityManager->flush();
+
+            $data = $this->serializer->serialize($document, 'json', ['groups' => 'document:read']);
+
+            return JsonResponse::fromJsonString($data, Response::HTTP_CREATED);
+
+        } catch (\Exception $e) {
+            return new JsonResponse(
+                ['error' => 'Error al subir el documento: ' . $e->getMessage()],
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
         }
-
-        if (!$file) {
-            return new JsonResponse(['error' => 'No file uploaded'], Response::HTTP_BAD_REQUEST);
-        }
-
-        $document = new Document();
-        $document->setPatient($patient);
-        $document->setType($type);
-        $document->setCaptureDate(new \DateTime($captureDate));
-        $document->setDocumentFile($file);
-
-        $this->entityManager->persist($document);
-        $this->entityManager->flush();
-
-        $data = $this->serializer->serialize($document, 'json', ['groups' => 'document:read']);
-
-        return JsonResponse::fromJsonString($data, Response::HTTP_CREATED);
     }
 
     // DELETE /api/documents/{id}
