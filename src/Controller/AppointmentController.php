@@ -169,43 +169,48 @@ class AppointmentController extends AbstractController
     public function update(Appointment $appointment, Request $request): JsonResponse
     {
         try {
-            $this->serializer->deserialize(
-                $request->getContent(),
-                Appointment::class,
-                'json',
-                ['object_to_populate' => $appointment, 'groups' => 'appointment:write']
-            );
+            $data = json_decode($request->getContent(), true);
 
-            $errors = $this->validator->validate($appointment);
-            if (count($errors) > 0) {
-                $errorMessages = [];
-                foreach ($errors as $error) {
-                    $errorMessages[$error->getPropertyPath()] = $error->getMessage();
+            // Manually fetch entities to ensure they're fully loaded
+            if (isset($data['patient'])) {
+                $patient = $this->patientRepository->find($data['patient']);
+                if (!$patient) {
+                    return new JsonResponse(['error' => 'Patient not found'], Response::HTTP_BAD_REQUEST);
                 }
-
-                return new JsonResponse(['errors' => $errorMessages], Response::HTTP_BAD_REQUEST);
+                $appointment->setPatient($patient);
             }
 
-            $this->entityManager->flush();
+            if (isset($data['dentist'])) {
+                $dentist = $this->dentistRepository->find($data['dentist']);
+                if (!$dentist) {
+                    return new JsonResponse(['error' => 'Dentist not found'], Response::HTTP_BAD_REQUEST);
+                }
+                $appointment->setDentist($dentist);
+            }
 
-            $data = $this->serializer->serialize($appointment, 'json', ['groups' => 'appointment:read']);
+            if (isset($data['box'])) {
+                $box = $this->boxRepository->find($data['box']);
+                if (!$box) {
+                    return new JsonResponse(['error' => 'Box not found'], Response::HTTP_BAD_REQUEST);
+                }
+                $appointment->setBox($box);
+            }
 
-            return JsonResponse::fromJsonString($data);
-        } catch (\Exception $e) {
-            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
-        }
-    }
-
-    #[Route('/{id}', methods: ['PATCH'])]
-    public function patch(Appointment $appointment, Request $request): JsonResponse
-    {
-        try {
-            $this->serializer->deserialize(
-                $request->getContent(),
-                Appointment::class,
-                'json',
-                ['object_to_populate' => $appointment, 'groups' => 'appointment:write']
-            );
+            if (isset($data['treatment'])) {
+                $treatment = $this->treatmentRepository->find($data['treatment']);
+                if (!$treatment) {
+                    return new JsonResponse(['error' => 'Treatment not found'], Response::HTTP_BAD_REQUEST);
+                }
+                $appointment->setTreatment($treatment);
+            }
+            
+            if (isset($data['visitDate'])) {
+                $appointment->setVisitDate(new \DateTime($data['visitDate']));
+            }
+            
+            if (isset($data['consultationReason'])) {
+                $appointment->setConsultationReason($data['consultationReason']);
+            }
 
             $errors = $this->validator->validate($appointment);
             if (count($errors) > 0) {
