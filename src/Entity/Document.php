@@ -5,27 +5,56 @@ namespace App\Entity;
 use App\Repository\DocumentRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\HttpFoundation\File\File;
+use Vich\UploaderBundle\Mapping\Attribute\Uploadable;
+use Vich\UploaderBundle\Mapping\Attribute\UploadableField;
 
+#[Uploadable]
 #[ORM\Entity(repositoryClass: DocumentRepository::class)]
 class Document
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['document:read'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(targetEntity: Patient::class)]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['document:read'])]
     private ?Patient $patient = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['document:read', 'document:write'])]
     private ?string $type = null;
 
-    #[ORM\Column(length: 255)]
+    // This is the virtual file field (not stored in DB)
+    #[UploadableField(mapping: 'patient_documents', fileNameProperty: 'fileUrl')]
+    private ?File $documentFile = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['document:read'])]
     private ?string $fileUrl = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
+    #[Groups(['document:read', 'document:write'])]
     private ?\DateTimeInterface $captureDate = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $updatedAt = null;
+    public function setDocumentFile(?File $file = null): void
+    {
+        $this->documentFile = $file;
+        if ($file !== null) {
+            $this->updatedAt = new \DateTimeImmutable();
+        }
+    }
+
+    public function getDocumentFile(): ?File
+    {
+        return $this->documentFile;
+    }
 
     public function getId(): ?int
     {
