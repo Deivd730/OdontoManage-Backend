@@ -16,6 +16,8 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 #[Route('/api/patients')]
 class PatientController extends AbstractController
 {
+    private const MAX_PROFILE_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
+
     public function __construct(
         private PatientRepository $patientRepository,
         private EntityManagerInterface $entityManager,
@@ -142,5 +144,79 @@ class PatientController extends AbstractController
         $this->entityManager->flush();
 
         return new JsonResponse( ['message' => 'Patient deleted successfully'], Response::HTTP_OK);
+    }
+
+    #[Route('/{id}/profile-image', methods: ['PATCH'])]
+    public function uploadProfileImage(Patient $patient, Request $request): JsonResponse
+    {
+        try {
+            $payload = json_decode($request->getContent(), true);
+
+            if (!is_array($payload)) {
+                return new JsonResponse(
+                    ['error' => 'Invalid JSON payload.'],
+                    Response::HTTP_BAD_REQUEST
+                );
+            }
+
+            $profileImage = $payload['profileImage'] ?? $payload['profileImageName'] ?? null;
+
+            if (!is_string($profileImage) || trim($profileImage) === '') {
+                return new JsonResponse(
+                    ['error' => 'The field profileImage is required.'],
+                    Response::HTTP_BAD_REQUEST
+                );
+            }
+
+            $validationError = $this->validateBase64ProfileImage($profileImage);
+            if ($validationError !== null) {
+                return new JsonResponse(['error' => $validationError], Response::HTTP_BAD_REQUEST);
+            }
+
+            $patient->setProfileImageName($profileImage);
+            $patient->setUpdatedAt(new \DateTimeImmutable());
+            $this->entityManager->flush();
+
+            $data = $this->serializer->serialize($patient, 'json', ['groups' => 'patient:read']);
+
+            return JsonResponse::fromJsonString($data);
+        } catch (\Exception $e) {
+            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
+        }
+    }
+
+    #[Route('/{id}/profile-image', methods: ['DELETE'])]
+    public function removeProfileImage(Patient $patient): JsonResponse
+    {
+        $patient->setProfileImageName(null);
+        $patient->setUpdatedAt(new \DateTimeImmutable());
+        $this->entityManager->flush();
+
+        $data = $this->serializer->serialize($patient, 'json', ['groups' => 'patient:read']);
+
+        return JsonResponse::fromJsonString($data);
+    }
+
+    private function validateBase64ProfileImage(string $profileImage): ?string
+    {
+        if (!preg_match('/^data:image\/(png|jpe?g|gif|webp);base64,/', $profileImage)) {
+            return 'Invalid image format. Allowed: PNG, JPG, JPEG, GIF, WEBP.';
+        }
+
+        $parts = explode(',', $profileImage, 2);
+        if (count($parts) !== 2) {
+            return 'Invalid base64 image payload.';
+        }
+
+        $decoded = base64_decode($parts[1], true);
+        if ($decoded === false) {
+            return 'Invalid base64 image content.';
+        }
+
+        if (strlen($decoded) > self::MAX_PROFILE_IMAGE_SIZE_BYTES) {
+            return 'Image too large. Maximum size is 5MB.';
+        }
+
+        return null;
     }
 }
