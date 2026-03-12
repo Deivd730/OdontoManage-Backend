@@ -17,7 +17,7 @@ class Treatment
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['treatment:read', 'treatment:write', 'appointment:read'])]
+    #[Groups(['treatment:read', 'treatment:write', 'appointment:read', 'odontogram:read'])]
     private ?string $name = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]

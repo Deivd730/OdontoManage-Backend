@@ -29,12 +29,12 @@ class Appointment
 
     #[ORM\ManyToOne(targetEntity: Dentist::class)]
     #[ORM\JoinColumn(nullable: false)]
-    #[Groups(['appointment:read', 'appointment:write', 'odontogram:read'])]
+    #[Groups(['appointment:read', 'appointment:write'])]
     private ?Dentist $dentist = null;
 
     #[ORM\ManyToOne(targetEntity: Box::class)]
     #[ORM\JoinColumn(nullable: false)]
-    #[Groups(['appointment:read', 'appointment:write', 'odontogram:read'])]
+    #[Groups(['appointment:read', 'appointment:write'])]
     private ?Box $box = null;
 
     #[ORM\ManyToOne(targetEntity: Treatment::class)]
@@ -47,7 +47,7 @@ class Appointment
     private ?\DateTimeInterface $visitDate = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
-    #[Groups(['appointment:read', 'appointment:write', 'odontogram:read'])]
+    #[Groups(['appointment:read', 'appointment:write'])]
     private ?string $consultationReason = null;
 
     #[ORM\ManyToOne(targetEntity: self::class, inversedBy: 'relatedAppointments')]

@@ -137,10 +137,10 @@ class PatientController extends AbstractController
 
     #[Route('/{id}', methods: ['DELETE'])]
     public function delete(Patient $patient): JsonResponse
-    {
+    {   
         $this->entityManager->remove($patient);
         $this->entityManager->flush();
 
-        return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+        return new JsonResponse( ['message' => 'Patient deleted successfully'], Response::HTTP_OK);
     }
 }
