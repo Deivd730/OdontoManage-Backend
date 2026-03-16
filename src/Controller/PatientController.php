@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Patient;
 use App\Repository\PatientRepository;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -17,6 +18,7 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 class PatientController extends AbstractController
 {
     private const MAX_PROFILE_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
+    private const NATIONAL_ID_ALREADY_EXISTS_MESSAGE = 'National ID already exists.';
 
     public function __construct(
         private PatientRepository $patientRepository,
@@ -64,12 +66,19 @@ class PatientController extends AbstractController
                 return new JsonResponse(['errors' => $errorMessages], Response::HTTP_BAD_REQUEST);
             }
 
+            $duplicateResponse = $this->validateNationalIdUniqueness($patient);
+            if ($duplicateResponse !== null) {
+                return $duplicateResponse;
+            }
+
             $this->entityManager->persist($patient);
             $this->entityManager->flush();
 
             $data = $this->serializer->serialize($patient, 'json', ['groups' => 'patient:read']);
 
             return JsonResponse::fromJsonString($data, Response::HTTP_CREATED);
+        } catch (UniqueConstraintViolationException) {
+            return $this->nationalIdAlreadyExistsResponse();
         } catch (\Exception $e) {
             return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
         }
@@ -96,11 +105,18 @@ class PatientController extends AbstractController
                 return new JsonResponse(['errors' => $errorMessages], Response::HTTP_BAD_REQUEST);
             }
 
+            $duplicateResponse = $this->validateNationalIdUniqueness($patient, $patient->getId());
+            if ($duplicateResponse !== null) {
+                return $duplicateResponse;
+            }
+
             $this->entityManager->flush();
 
             $data = $this->serializer->serialize($patient, 'json', ['groups' => 'patient:read']);
 
             return JsonResponse::fromJsonString($data);
+        } catch (UniqueConstraintViolationException) {
+            return $this->nationalIdAlreadyExistsResponse();
         } catch (\Exception $e) {
             return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
         }
@@ -127,11 +143,18 @@ class PatientController extends AbstractController
                 return new JsonResponse(['errors' => $errorMessages], Response::HTTP_BAD_REQUEST);
             }
 
+            $duplicateResponse = $this->validateNationalIdUniqueness($patient, $patient->getId());
+            if ($duplicateResponse !== null) {
+                return $duplicateResponse;
+            }
+
             $this->entityManager->flush();
 
             $data = $this->serializer->serialize($patient, 'json', ['groups' => 'patient:read']);
 
             return JsonResponse::fromJsonString($data);
+        } catch (UniqueConstraintViolationException) {
+            return $this->nationalIdAlreadyExistsResponse();
         } catch (\Exception $e) {
             return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
         }
@@ -195,6 +218,35 @@ class PatientController extends AbstractController
         $data = $this->serializer->serialize($patient, 'json', ['groups' => 'patient:read']);
 
         return JsonResponse::fromJsonString($data);
+    }
+
+    private function validateNationalIdUniqueness(Patient $patient, ?int $currentPatientId = null): ?JsonResponse
+    {
+        $nationalId = $patient->getNationalId();
+
+        if (!is_string($nationalId) || trim($nationalId) === '') {
+            return null;
+        }
+
+        $existingPatient = $this->patientRepository->findOneByNationalId($nationalId);
+
+        if ($existingPatient === null) {
+            return null;
+        }
+
+        if ($currentPatientId !== null && $existingPatient->getId() === $currentPatientId) {
+            return null;
+        }
+
+        return $this->nationalIdAlreadyExistsResponse();
+    }
+
+    private function nationalIdAlreadyExistsResponse(): JsonResponse
+    {
+        return new JsonResponse(
+            ['errors' => ['nationalId' => self::NATIONAL_ID_ALREADY_EXISTS_MESSAGE]],
+            Response::HTTP_BAD_REQUEST
+        );
     }
 
     private function validateBase64ProfileImage(string $profileImage): ?string

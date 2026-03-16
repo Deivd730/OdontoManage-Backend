@@ -16,6 +16,11 @@ class PatientRepository extends ServiceEntityRepository
         parent::__construct($registry, Patient::class);
     }
 
+    public function findOneByNationalId(string $nationalId): ?Patient
+    {
+        return $this->findOneBy(['nationalId' => $nationalId]);
+    }
+
     //    /**
     //     * @return Patient[] Returns an array of Patient objects
     //     */
