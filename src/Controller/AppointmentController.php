@@ -114,7 +114,6 @@ class AppointmentController extends AbstractController
             // Manually fetch entities to ensure they're fully loaded
             $patient = $this->patientRepository->find($data['patient'] ?? null);
             $dentist = $this->dentistRepository->find($data['dentist'] ?? null);
-            $box = $this->boxRepository->find($data['box'] ?? null);
             $treatment = $this->treatmentRepository->find($data['treatment'] ?? null);
 
             if (!$patient) {
@@ -123,11 +122,20 @@ class AppointmentController extends AbstractController
             if (!$dentist) {
                 return new JsonResponse(['error' => 'Dentist not found'], Response::HTTP_BAD_REQUEST);
             }
-            if (!$box) {
-                return new JsonResponse(['error' => 'Box not found'], Response::HTTP_BAD_REQUEST);
-            }
             if (!$treatment) {
                 return new JsonResponse(['error' => 'Treatment not found'], Response::HTTP_BAD_REQUEST);
+            }
+
+            if (!isset($data['visitDate'])) {
+                return new JsonResponse(['error' => 'visitDate is required'], Response::HTTP_BAD_REQUEST);
+            }
+
+            $visitDate = new \DateTime($data['visitDate']);
+
+            // Auto-assign an available box for this date/time
+            $box = $this->findAvailableBox($visitDate, $treatment);
+            if (!$box) {
+                return new JsonResponse(['error' => 'No available boxes for the requested time slot'], Response::HTTP_CONFLICT);
             }
 
             $appointment = new Appointment();
@@ -135,10 +143,7 @@ class AppointmentController extends AbstractController
             $appointment->setDentist($dentist);
             $appointment->setBox($box);
             $appointment->setTreatment($treatment);
-            
-            if (isset($data['visitDate'])) {
-                $appointment->setVisitDate(new \DateTime($data['visitDate']));
-            }
+            $appointment->setVisitDate($visitDate);
             
             if (isset($data['consultationReason'])) {
                 $appointment->setConsultationReason($data['consultationReason']);
@@ -165,6 +170,64 @@ class AppointmentController extends AbstractController
         }
     }
 
+    /**
+     * Find an available box for the given date/time and treatment duration
+     */
+    private function findAvailableBox(\DateTime $visitDate, \App\Entity\Treatment $treatment): ?\App\Entity\Box
+    {
+        $durationMinutes = $treatment->getDurationMinutes();
+        $bufferMinutes = 5;
+
+        // Get all boxes and check which one is available
+        $boxes = $this->boxRepository->findAll();
+
+        foreach ($boxes as $box) {
+            // Load appointments for this box on the same day
+            $dayStart = \DateTime::createFromInterface($visitDate);
+            $dayStart = $dayStart->setTime(0, 0, 0);
+            $dayEnd = \DateTime::createFromInterface($visitDate);
+            $dayEnd = $dayEnd->setTime(23, 59, 59);
+
+            $appointments = $this->appointmentRepository->createQueryBuilder('a')
+                ->innerJoin('a.treatment', 't')
+                ->where('a.box = :box')
+                ->andWhere('a.visitDate >= :dayStart')
+                ->andWhere('a.visitDate <= :dayEnd')
+                ->setParameter('box', $box)
+                ->setParameter('dayStart', $dayStart)
+                ->setParameter('dayEnd', $dayEnd)
+                ->getQuery()
+                ->getResult();
+
+            // Check if this box has conflicts
+            $endTime = (clone $visitDate)->modify('+' . $durationMinutes . ' minutes');
+            $endWithBuffer = (clone $endTime)->modify('+' . $bufferMinutes . ' minutes');
+            $hasConflict = false;
+
+            foreach ($appointments as $other) {
+                $otherTreatment = $other->getTreatment();
+                if (!$otherTreatment) {
+                    continue;
+                }
+
+                $otherStart = \DateTime::createFromInterface($other->getVisitDate());
+                $otherEnd = (clone $otherStart)->modify('+' . $otherTreatment->getDurationMinutes() . ' minutes');
+                $otherEndWithBuffer = (clone $otherEnd)->modify('+' . $bufferMinutes . ' minutes');
+
+                if ($otherStart < $endWithBuffer && $otherEndWithBuffer > $visitDate) {
+                    $hasConflict = true;
+                    break;
+                }
+            }
+
+            if (!$hasConflict) {
+                return $box;
+            }
+        }
+
+        return null;
+    }
+
     #[Route('/{id}', methods: ['PUT'])]
     public function update(Appointment $appointment, Request $request): JsonResponse
     {
@@ -188,14 +251,6 @@ class AppointmentController extends AbstractController
                 $appointment->setDentist($dentist);
             }
 
-            if (isset($data['box'])) {
-                $box = $this->boxRepository->find($data['box']);
-                if (!$box) {
-                    return new JsonResponse(['error' => 'Box not found'], Response::HTTP_BAD_REQUEST);
-                }
-                $appointment->setBox($box);
-            }
-
             if (isset($data['treatment'])) {
                 $treatment = $this->treatmentRepository->find($data['treatment']);
                 if (!$treatment) {
@@ -206,6 +261,16 @@ class AppointmentController extends AbstractController
             
             if (isset($data['visitDate'])) {
                 $appointment->setVisitDate(new \DateTime($data['visitDate']));
+                
+                // Re-assign box when date changes
+                $treatment = $appointment->getTreatment();
+                if ($treatment) {
+                    $box = $this->findAvailableBox($appointment->getVisitDate(), $treatment);
+                    if (!$box) {
+                        return new JsonResponse(['error' => 'No available boxes for the requested time slot'], Response::HTTP_CONFLICT);
+                    }
+                    $appointment->setBox($box);
+                }
             }
             
             if (isset($data['consultationReason'])) {
