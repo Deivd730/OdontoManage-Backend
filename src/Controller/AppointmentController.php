@@ -108,6 +108,11 @@ class AppointmentController extends AbstractController
     #[Route('', methods: ['POST'])]
     public function create(Request $request): JsonResponse
     {
+        // Only ROLE_AUXILIAR and ROLE_ADMIN can create appointments
+        if (!$this->isGranted('ROLE_AUXILIAR') && !$this->isGranted('ROLE_ADMIN')) {
+            return new JsonResponse(['error' => 'Only auxiliars and admins can create appointments'], Response::HTTP_FORBIDDEN);
+        }
+
         try {
             $data = json_decode($request->getContent(), true);
 
@@ -231,6 +236,11 @@ class AppointmentController extends AbstractController
     #[Route('/{id}', methods: ['PUT'])]
     public function update(Appointment $appointment, Request $request): JsonResponse
     {
+        // Only ROLE_AUXILIAR and ROLE_ADMIN can update appointments
+        if (!$this->isGranted('ROLE_AUXILIAR') && !$this->isGranted('ROLE_ADMIN')) {
+            return new JsonResponse(['error' => 'Only auxiliars and admins can update appointments'], Response::HTTP_FORBIDDEN);
+        }
+
         try {
             $data = json_decode($request->getContent(), true);
 
@@ -300,6 +310,11 @@ class AppointmentController extends AbstractController
     #[Route('/{id}', methods: ['DELETE'])]
     public function delete(Appointment $appointment): JsonResponse
     {
+        // Only ROLE_AUXILIAR and ROLE_ADMIN can delete appointments
+        if (!$this->isGranted('ROLE_AUXILIAR') && !$this->isGranted('ROLE_ADMIN')) {
+            return new JsonResponse(['error' => 'Only auxiliars and admins can delete appointments'], Response::HTTP_FORBIDDEN);
+        }
+
         $this->entityManager->remove($appointment);
         $this->entityManager->flush();
 

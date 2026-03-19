@@ -34,4 +34,17 @@ security:
         - { path: ^/api, roles: PUBLIC_ACCESS, methods: [OPTIONS] }
         - { path: ^/api/login, roles: PUBLIC_ACCESS }
         - { path: ^/api/users/register, roles: PUBLIC_ACCESS, methods: [POST] }
+        # Admin/Technical endpoints (only ROLE_ADMIN)
+        - { path: ^/api/users, roles: ROLE_ADMIN }
+        - { path: ^/api/dentists, roles: ROLE_ADMIN }
+        - { path: ^/api/boxes, roles: ROLE_ADMIN }
+        # Patients: AUXILIAR (CRUD), DENTIST (read-only), ADMIN (all)
+        - { path: ^/api/patients, roles: [ROLE_AUXILIAR, ROLE_DENTIST, ROLE_ADMIN] }
+        # Appointments: AUXILIAR (CRUD), DENTIST (read-only), ADMIN (all)
+        - { path: ^/api/appointments, roles: [ROLE_AUXILIAR, ROLE_DENTIST, ROLE_ADMIN] }
+        # Odontograms: DENTIST (CRUD), AUXILIAR (read-only), ADMIN (all)
+        - { path: ^/api/odontograms, roles: [ROLE_DENTIST, ROLE_AUXILIAR, ROLE_ADMIN] }
+        # Documents: AUXILIAR (CRUD), DENTIST (CRUD), ADMIN (all)
+        - { path: ^/api/documents, roles: [ROLE_AUXILIAR, ROLE_DENTIST, ROLE_ADMIN] }
+        # Generic protection
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }

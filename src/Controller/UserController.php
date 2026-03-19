@@ -52,6 +52,7 @@ class UserController extends AbstractController
         $name = isset($payload['name']) ? trim((string) $payload['name']) : '';
         $email = isset($payload['email']) ? trim((string) $payload['email']) : '';
         $plainPassword = isset($payload['password']) ? (string) $payload['password'] : '';
+        $roles = isset($payload['roles']) && is_array($payload['roles']) ? $payload['roles'] : [];
 
         if ($name == '' || $email == '' || $plainPassword == '') {
             return new JsonResponse(
@@ -68,16 +69,31 @@ class UserController extends AbstractController
             return new JsonResponse(['error' => 'Email already registered.'], Response::HTTP_CONFLICT);
         }
 
+        // Validate and filter roles - only ROLE_AUXILIAR allowed for self-registration
+        // ROLE_DENTIST and ROLE_ADMIN can only be created by ROLE_ADMIN through /api/users endpoint
+        $validRoles = ['ROLE_AUXILIAR'];
+        $roles = array_filter($roles, static fn(string $role): bool => in_array($role, $validRoles, true));
+
+        if (empty($roles)) {
+            $roles = ['ROLE_AUXILIAR']; // Default role
+        }
+
         $user = new User();
         $user->setName($name);
         $user->setEmail($email);
+        $user->setRoles($roles);
         $user->setPassword($this->passwordHasher->hashPassword($user, $plainPassword));
 
         $this->entityManager->persist($user);
         $this->entityManager->flush();
 
         return new JsonResponse(
-            ['id' => $user->getId(), 'name' => $user->getName(), 'email' => $user->getEmail()],
+            [
+                'id' => $user->getId(),
+                'name' => $user->getName(),
+                'email' => $user->getEmail(),
+                'roles' => $user->getRoles(),
+            ],
             Response::HTTP_CREATED
         );
     }
@@ -117,6 +133,7 @@ class UserController extends AbstractController
     }
 
     #[Route('', methods: ['POST'])]
+    #[IsGranted('ROLE_ADMIN')]
     public function create(Request $request): JsonResponse
     {
         $payload = json_decode($request->getContent(), true);
@@ -142,6 +159,14 @@ class UserController extends AbstractController
 
         if ($this->userRepository->findOneBy(['email' => $email]) !== null) {
             return new JsonResponse(['error' => 'Email already registered.'], Response::HTTP_CONFLICT);
+        }
+
+        // Validate roles - only ROLE_ADMIN can create ROLE_DENTIST and ROLE_ADMIN users
+        $validRoles = ['ROLE_ADMIN', 'ROLE_AUXILIAR', 'ROLE_DENTIST'];
+        $roles = array_filter($roles, static fn(string $role): bool => in_array($role, $validRoles, true));
+
+        if (empty($roles)) {
+            $roles = ['ROLE_AUXILIAR']; // Default role
         }
 
         $user = new User();
@@ -191,12 +216,23 @@ class UserController extends AbstractController
             $userToUpdate->setEmail($payload['email']);
         }
 
+        // Only ROLE_ADMIN can change roles
+        if (isset($payload['roles']) && $this->isGranted('ROLE_ADMIN')) {
+            $validRoles = ['ROLE_ADMIN', 'ROLE_AUXILIAR'];
+            $roles = array_filter($payload['roles'], static fn(string $role): bool => in_array($role, $validRoles, true));
+            
+            if (!empty($roles)) {
+                $userToUpdate->setRoles($roles);
+            }
+        }
+
         $this->entityManager->flush();
 
         return new JsonResponse([
             'id' => $userToUpdate->getId(),
             'name' => $userToUpdate->getName(),
-            'email' => $userToUpdate->getEmail()
+            'email' => $userToUpdate->getEmail(),
+            'roles' => $userToUpdate->getRoles(),
         ]);
     }
 

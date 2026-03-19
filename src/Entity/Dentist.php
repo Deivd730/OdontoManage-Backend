@@ -109,7 +109,12 @@ class Dentist implements UserInterface, PasswordAuthenticatedUserInterface
     public function getRoles(): array
     {
         $roles = $this->roles;
-        // guarantee every user at least has ROLE_USER
+        
+        // Ensure dentist always has ROLE_DENTIST
+        if (!in_array('ROLE_DENTIST', $roles)) {
+            $roles[] = 'ROLE_DENTIST';
+        }
+        
         $roles[] = 'ROLE_USER';
 
         return array_unique($roles);

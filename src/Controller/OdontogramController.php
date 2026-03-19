@@ -67,6 +67,11 @@ class OdontogramController extends AbstractController
     #[Route('', methods: ['POST'])]
     public function create(Request $request): JsonResponse
     {
+        // Only ROLE_DENTIST and ROLE_ADMIN can create odontograms
+        if (!$this->isGranted('ROLE_DENTIST') && !$this->isGranted('ROLE_ADMIN')) {
+            return new JsonResponse(['error' => 'Only dentists and admins can create odontograms'], Response::HTTP_FORBIDDEN);
+        }
+
         try {
             $data = json_decode($request->getContent(), true);
             $odontogram = new Odontogram();
@@ -179,6 +184,11 @@ class OdontogramController extends AbstractController
     #[Route('/{id}', methods: ['PATCH'])]
     public function patch(Odontogram $odontogram, Request $request): JsonResponse
     {
+        // Only ROLE_DENTIST and ROLE_ADMIN can patch odontograms
+        if (!$this->isGranted('ROLE_DENTIST') && !$this->isGranted('ROLE_ADMIN')) {
+            return new JsonResponse(['error' => 'Only dentists and admins can update odontograms'], Response::HTTP_FORBIDDEN);
+        }
+
         try {
             $this->serializer->deserialize(
                 $request->getContent(),
@@ -210,6 +220,11 @@ class OdontogramController extends AbstractController
     #[Route('/{id}', methods: ['DELETE'])]
     public function delete(Odontogram $odontogram): JsonResponse
     {
+        // Only ROLE_DENTIST and ROLE_ADMIN can delete odontograms
+        if (!$this->isGranted('ROLE_DENTIST') && !$this->isGranted('ROLE_ADMIN')) {
+            return new JsonResponse(['error' => 'Only dentists and admins can delete odontograms'], Response::HTTP_FORBIDDEN);
+        }
+
         $this->entityManager->remove($odontogram);
         $this->entityManager->flush();
 
