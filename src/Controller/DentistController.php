@@ -43,6 +43,7 @@ class DentistController extends AbstractController
     }
 
     #[Route('', methods: ['POST'])]
+    #[IsGranted('ROLE_ADMIN')]
     public function create(Request $request): JsonResponse
     {
         try {
@@ -52,6 +53,9 @@ class DentistController extends AbstractController
                 'json',
                 ['groups' => 'dentist:write']
             );
+
+            // Ensure dentist always has ROLE_DENTIST
+            $dentist->setRoles(['ROLE_DENTIST']);
 
             $errors = $this->validator->validate($dentist);
             if (count($errors) > 0) {
@@ -75,7 +79,7 @@ class DentistController extends AbstractController
     }
 
     #[Route('/{id}', methods: ['PUT'])]
-    #[IsGranted('ROLE_USER')]
+    #[IsGranted('ROLE_ADMIN')]
     public function update(Dentist $dentist, Request $request): JsonResponse
     {
         try {
@@ -85,6 +89,9 @@ class DentistController extends AbstractController
                 'json',
                 ['object_to_populate' => $dentist, 'groups' => 'dentist:write']
             );
+
+            // Ensure dentist always has ROLE_DENTIST
+            $dentist->setRoles(['ROLE_DENTIST']);
 
             $errors = $this->validator->validate($dentist);
             if (count($errors) > 0) {
@@ -107,7 +114,7 @@ class DentistController extends AbstractController
     }
 
     #[Route('/{id}', methods: ['PATCH'])]
-    #[IsGranted('ROLE_USER')]
+    #[IsGranted('ROLE_ADMIN')]
     public function patch(Dentist $dentist, Request $request): JsonResponse
     {
         try {
@@ -117,6 +124,9 @@ class DentistController extends AbstractController
                 'json',
                 ['object_to_populate' => $dentist, 'groups' => 'dentist:write']
             );
+
+            // Ensure dentist always has ROLE_DENTIST
+            $dentist->setRoles(['ROLE_DENTIST']);
 
             $errors = $this->validator->validate($dentist);
             if (count($errors) > 0) {
@@ -139,7 +149,7 @@ class DentistController extends AbstractController
     }
 
     #[Route('/{id}', methods: ['DELETE'])]
-    #[IsGranted('ROLE_USER')]
+    #[IsGranted('ROLE_ADMIN')]
     public function delete(Dentist $dentist): JsonResponse
     {
         $this->entityManager->remove($dentist);

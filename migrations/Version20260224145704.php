@@ -53,11 +53,11 @@ final class Version20260224145704 extends AbstractMigration
         ");
 
         $this->addSql("INSERT INTO dentist (id, email, roles, password, first_name, last_name, specialty, available_days, phone, updated_at, box_id) VALUES
-            (1, 'ana.garcia@clinic.local', '[]', 'hashed_pass_1', 'Ana', 'Garcia', 'Ortodoncia', 'Mon', '600111222', '2026-02-24 09:00:00', NULL),
-            (2, 'luis.martin@clinic.local', '[]', 'hashed_pass_2', 'Luis', 'Martin', 'Endodoncia', 'Tue', '600333444', '2026-02-24 09:05:00', NULL),
-            (3, 'marta.suarez@clinic.local', '[]', 'hashed_pass_3', 'Marta', 'Suarez', 'Protesis', 'Wed', '600555666', '2026-02-24 09:10:00', NULL),
-            (4, 'pedro.alvarez@clinic.local', '[]', 'hashed_pass_4', 'Pedro', 'Alvarez', 'Implantología', 'Thu', '600777888', '2026-02-24 09:15:00', NULL),
-            (5, 'laura.gomez@clinic.local', '[]', 'hashed_pass_5', 'Laura', 'Gomez', 'Odontopediatría', 'Fri', '600999000', '2026-02-24 09:20:00', NULL)
+            (1, 'ana.garcia@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$4S2gNqEVlx7k9JrLmP5Q.u0W3X6Y9Z2B5C8D1E4F7G0H3K6N9Q', 'Ana', 'Garcia', 'Ortodoncia', 'Mon', '600111222', '2026-02-24 09:00:00', NULL),
+            (2, 'luis.martin@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$4S2gNqEVlx7k9JrLmP5Q.u0W3X6Y9Z2B5C8D1E4F7G0H3K6N9Q', 'Luis', 'Martin', 'Endodoncia', 'Tue', '600333444', '2026-02-24 09:05:00', NULL),
+            (3, 'marta.suarez@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$4S2gNqEVlx7k9JrLmP5Q.u0W3X6Y9Z2B5C8D1E4F7G0H3K6N9Q', 'Marta', 'Suarez', 'Protesis', 'Wed', '600555666', '2026-02-24 09:10:00', NULL),
+            (4, 'pedro.alvarez@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$4S2gNqEVlx7k9JrLmP5Q.u0W3X6Y9Z2B5C8D1E4F7G0H3K6N9Q', 'Pedro', 'Alvarez', 'Implantología', 'Thu', '600777888', '2026-02-24 09:15:00', NULL),
+            (5, 'laura.gomez@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$4S2gNqEVlx7k9JrLmP5Q.u0W3X6Y9Z2B5C8D1E4F7G0H3K6N9Q', 'Laura', 'Gomez', 'Odontopediatría', 'Fri', '600999000', '2026-02-24 09:20:00', NULL)
         ");
 
         $this->addSql("INSERT INTO treatment (id, name, description, duration_minutes) VALUES
@@ -166,7 +166,21 @@ final class Version20260224145704 extends AbstractMigration
 
         // Insertar usuario administrador
         $this->addSql("INSERT INTO users (name, email, roles, password) VALUES
-            ('admin', 'admin@gmail.com', '[\"ROLE_ADMIN\"]', '\$2y\$13\$wF3KSdnulnp/YDCOLy982.0KIeA3NpcxI8wblWmZqsOQXVD7NOPrm')
+            ('admin', 'admin@gmail.com', '[\"ROLE_ADMIN\"]', '\$2y\$13\$m8EGT456LdOtZQ6RuM9cJO3CxVTwqMsiEJcTlQMPVJ1xScAYU.ovK')
+        ");
+
+        // Insertar usuario auxiliar
+        $this->addSql("INSERT INTO users (name, email, roles, password) VALUES
+            ('auxiliar', 'auxiliar@gmail.com', '[\"ROLE_AUXILIAR\"]', '\$2y\$13\$m8EGT456LdOtZQ6RuM9cJO3CxVTwqMsiEJcTlQMPVJ1xScAYU.ovK')
+        ");
+
+        // Insertar dentistas como usuarios
+        $this->addSql("INSERT INTO users (name, email, roles, password) VALUES
+            ('Ana Garcia', 'ana.garcia@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$m8EGT456LdOtZQ6RuM9cJO3CxVTwqMsiEJcTlQMPVJ1xScAYU.ovK'),
+            ('Luis Martin', 'luis.martin@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$m8EGT456LdOtZQ6RuM9cJO3CxVTwqMsiEJcTlQMPVJ1xScAYU.ovK'),
+            ('Marta Suarez', 'marta.suarez@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$m8EGT456LdOtZQ6RuM9cJO3CxVTwqMsiEJcTlQMPVJ1xScAYU.ovK'),
+            ('Pedro Alvarez', 'pedro.alvarez@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$m8EGT456LdOtZQ6RuM9cJO3CxVTwqMsiEJcTlQMPVJ1xScAYU.ovK'),
+            ('Laura Gomez', 'laura.gomez@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$m8EGT456LdOtZQ6RuM9cJO3CxVTwqMsiEJcTlQMPVJ1xScAYU.ovK')
         ");
 
         $this->addSql("INSERT INTO patient (id, first_name, last_name, national_id, social_security_number, phone, email, address, billing_data, health_status, family_history, lifestyle_habits, medication_allergies, registration_date, profile_image_name, updated_at, dentist_id) VALUES

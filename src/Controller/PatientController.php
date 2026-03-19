@@ -48,6 +48,11 @@ class PatientController extends AbstractController
     #[Route('', methods: ['POST'])]
     public function create(Request $request): JsonResponse
     {
+        // Only ROLE_AUXILIAR and ROLE_ADMIN can create patients
+        if (!$this->isGranted('ROLE_AUXILIAR') && !$this->isGranted('ROLE_ADMIN')) {
+            return new JsonResponse(['error' => 'Only auxiliars and admins can create patients'], Response::HTTP_FORBIDDEN);
+        }
+
         try {
             $patient = $this->serializer->deserialize(
                 $request->getContent(),
@@ -87,6 +92,11 @@ class PatientController extends AbstractController
     #[Route('/{id}', methods: ['PUT'])]
     public function update(Patient $patient, Request $request): JsonResponse
     {
+        // Only ROLE_AUXILIAR and ROLE_ADMIN can update patients
+        if (!$this->isGranted('ROLE_AUXILIAR') && !$this->isGranted('ROLE_ADMIN')) {
+            return new JsonResponse(['error' => 'Only auxiliars and admins can update patients'], Response::HTTP_FORBIDDEN);
+        }
+
         try {
             $this->serializer->deserialize(
                 $request->getContent(),
@@ -125,6 +135,11 @@ class PatientController extends AbstractController
     #[Route('/{id}', methods: ['PATCH'])]
     public function patch(Patient $patient, Request $request): JsonResponse
     {
+        // Only ROLE_AUXILIAR and ROLE_ADMIN can patch patients
+        if (!$this->isGranted('ROLE_AUXILIAR') && !$this->isGranted('ROLE_ADMIN')) {
+            return new JsonResponse(['error' => 'Only auxiliars and admins can update patients'], Response::HTTP_FORBIDDEN);
+        }
+
         try {
             $this->serializer->deserialize(
                 $request->getContent(),
@@ -163,6 +178,11 @@ class PatientController extends AbstractController
     #[Route('/{id}', methods: ['DELETE'])]
     public function delete(Patient $patient): JsonResponse
     {   
+        // Only ROLE_AUXILIAR and ROLE_ADMIN can delete patients
+        if (!$this->isGranted('ROLE_AUXILIAR') && !$this->isGranted('ROLE_ADMIN')) {
+            return new JsonResponse(['error' => 'Only auxiliars and admins can delete patients'], Response::HTTP_FORBIDDEN);
+        }
+
         $this->entityManager->remove($patient);
         $this->entityManager->flush();
 
