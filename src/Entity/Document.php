@@ -90,7 +90,7 @@ class Document
         return $this->fileUrl;
     }
 
-    public function setFileUrl(string $fileUrl): static
+    public function setFileUrl(?string $fileUrl): static
     {
         $this->fileUrl = $fileUrl;
 
