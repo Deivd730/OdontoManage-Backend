@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\Odontogram;
 use App\Entity\Patient;
 use App\Repository\PatientRepository;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
@@ -76,7 +77,12 @@ class PatientController extends AbstractController
                 return $duplicateResponse;
             }
 
+            $odontogram = new Odontogram();
+            $odontogram->setPatient($patient);
+            $odontogram->setType($this->isChildPatient($patient) ? Odontogram::TYPE_CHILD : Odontogram::TYPE_ADULT);
+
             $this->entityManager->persist($patient);
+            $this->entityManager->persist($odontogram);
             $this->entityManager->flush();
 
             $data = $this->serializer->serialize($patient, 'json', ['groups' => 'patient:read']);
@@ -290,5 +296,17 @@ class PatientController extends AbstractController
         }
 
         return null;
+    }
+
+    private function isChildPatient(Patient $patient): bool
+    {
+        $birthDate = $patient->getBirthDate();
+        if ($birthDate === null) {
+            return false;
+        }
+
+        $today = new \DateTimeImmutable('today');
+
+        return $birthDate->diff($today)->y < 12;
     }
 }
