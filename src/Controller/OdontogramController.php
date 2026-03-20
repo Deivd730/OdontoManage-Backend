@@ -82,6 +82,7 @@ class OdontogramController extends AbstractController
                 $patient = $this->patientRepository->find($patientId);
                 if (!$patient) return new JsonResponse(['error' => 'Patient not found'], 404);
                 $odontogram->setPatient($patient);
+                $odontogram->setType($this->isChildPatient($patient) ? Odontogram::TYPE_CHILD : Odontogram::TYPE_ADULT);
             }
             
            
@@ -229,5 +230,17 @@ class OdontogramController extends AbstractController
         $this->entityManager->flush();
 
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+    }
+
+    private function isChildPatient(\App\Entity\Patient $patient): bool
+    {
+        $birthDate = $patient->getBirthDate();
+        if ($birthDate === null) {
+            return false;
+        }
+
+        $today = new \DateTimeImmutable('today');
+
+        return $birthDate->diff($today)->y < 12;
     }
 }

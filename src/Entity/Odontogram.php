@@ -7,10 +7,14 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: OdontogramRepository::class)]
 class Odontogram
 {
+    public const TYPE_ADULT = 'adult';
+    public const TYPE_CHILD = 'child';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -30,6 +34,11 @@ class Odontogram
     #[ORM\OneToMany(mappedBy: 'odontogram', targetEntity: ToothPathology::class, cascade: ['persist', 'remove'])]
     #[Groups(['odontogram:read', 'odontogram:write'])]
     private Collection $toothPathologies;
+
+    #[ORM\Column(length: 20)]
+    #[Assert\Choice(choices: [self::TYPE_ADULT, self::TYPE_CHILD], message: 'Invalid odontogram type.')]
+    #[Groups(['odontogram:read'])]
+    private string $type = self::TYPE_ADULT;
 
     public function __construct()
     {
@@ -90,6 +99,18 @@ class Odontogram
                 $toothPathology->setOdontogram(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getType(): string
+    {
+        return $this->type;
+    }
+
+    public function setType(string $type): static
+    {
+        $this->type = $type;
 
         return $this;
     }

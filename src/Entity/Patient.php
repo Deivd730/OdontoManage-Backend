@@ -48,6 +48,12 @@ class Patient
     #[Groups(['patient:read', 'patient:write'])]
     private ?string $nationalId = null;
 
+    #[Assert\NotBlank(message: "Birth date is required.")]
+    #[Assert\LessThanOrEqual('today', message: "Birth date cannot be in the future.")]
+    #[ORM\Column(type: Types::DATE_IMMUTABLE)]
+    #[Groups(['patient:read', 'patient:write'])]
+    private ?\DateTimeImmutable $birthDate = null;
+
     #[ORM\Column(length: 20, nullable: true)]
     #[Groups(['patient:read', 'patient:write'])]
     private ?string $socialSecurityNumber = null;
@@ -156,6 +162,17 @@ class Patient
     public function setNationalId(?string $nationalId): static
     {
         $this->nationalId = $nationalId;
+        return $this;
+    }
+
+    public function getBirthDate(): ?\DateTimeImmutable
+    {
+        return $this->birthDate;
+    }
+
+    public function setBirthDate(\DateTimeImmutable $birthDate): static
+    {
+        $this->birthDate = $birthDate;
         return $this;
     }
 
