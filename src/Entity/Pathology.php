@@ -24,7 +24,7 @@ class Pathology
 
     #[ORM\Column(type: Types::TIME_MUTABLE, nullable: true)]
     #[Groups(['pathology:read', 'pathology:write'])]
-    private ?\DateTimeInterface $time = null;
+    private ?\DateTimeInterface $minutes = null;
 
     #[ORM\OneToMany(mappedBy: 'pathology', targetEntity: ToothPathology::class)]
     private Collection $toothPathologies;
@@ -51,14 +51,14 @@ class Pathology
         return $this;
     }
 
-    public function getTime(): ?\DateTimeInterface
+    public function getMinutes(): ?\DateTimeInterface
     {
-        return $this->time;
+        return $this->minutes;
     }
 
-    public function setTime(?\DateTimeInterface $time): static
+    public function setMinutes(?\DateTimeInterface $minutes): static
     {
-        $this->time = $time;
+        $this->minutes = $minutes;
 
         return $this;
     }
