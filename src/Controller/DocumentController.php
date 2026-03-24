@@ -47,6 +47,7 @@ class DocumentController extends AbstractController
         try {
             $patientId = $request->request->get('patient');
             $type = $request->request->get('type');
+            $name = $request->request->get('name');
             $captureDate = $request->request->get('captureDate');
             /** @var UploadedFile|null $file */
             $file = $request->files->get('documentFile');
@@ -88,6 +89,10 @@ class DocumentController extends AbstractController
                 return new JsonResponse(['error' => 'El tipo de documento es obligatorio'], Response::HTTP_BAD_REQUEST);
             }
 
+            if (!$name || trim($name) === '') {
+                return new JsonResponse(['error' => 'El nombre del documento es obligatorio'], Response::HTTP_BAD_REQUEST);
+            }
+
             if (!$captureDate) {
                 return new JsonResponse(['error' => 'La fecha de captura es obligatoria'], Response::HTTP_BAD_REQUEST);
             }
@@ -95,6 +100,7 @@ class DocumentController extends AbstractController
             $document = new Document();
             $document->setPatient($patient);
             $document->setType(trim($type));
+            $document->setName(trim($name));
             $document->setCaptureDate(new \DateTime($captureDate));
             $document->setDocumentFile($file);
 

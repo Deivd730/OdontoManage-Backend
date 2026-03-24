@@ -29,6 +29,10 @@ class Document
     #[Groups(['document:read', 'document:write'])]
     private ?string $type = null;
 
+    #[ORM\Column(length: 255)]
+    #[Groups(['document:read', 'document:write'])]
+    private ?string $name = null;
+
     // This is the virtual file field (not stored in DB)
     #[UploadableField(mapping: 'patient_documents', fileNameProperty: 'fileUrl')]
     private ?File $documentFile = null;
@@ -81,6 +85,18 @@ class Document
     public function setType(string $type): static
     {
         $this->type = $type;
+
+        return $this;
+    }
+
+    public function getName(): ?string
+    {
+        return $this->name;
+    }
+
+    public function setName(string $name): static
+    {
+        $this->name = $name;
 
         return $this;
     }
