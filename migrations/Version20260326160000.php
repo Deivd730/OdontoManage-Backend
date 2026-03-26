@@ -23,23 +23,23 @@ final class Version20260326160000 extends AbstractMigration
         $this->addSql('DELETE FROM tooth_pathology');
         $this->addSql('DELETE FROM pathology');
         
-        // Insert new pathologies with colors
-        $this->addSql("INSERT INTO pathology (description, color) VALUES 
-            ('Caries', '#FF4136'),
-            ('Caries', '#6f36ffff'),
-            ('Obturacion', '#d96900ff'),
-            ('Obturacion', '#0074D9'),
-            ('Corona', '#ff5e00ff'),
-            ('Corona', '#4400ffff'),
-            ('Ausente', '#0c0000ff'),
-            ('Endodoncia', '#420dc9ff'),
-            ('Endodoncia', '#c90d0dff'),
-            ('Exodoncia', '#111111ff'),
-            ('Exodonciaort', '#3813f1ff'),
-            ('Exodonciaort', '#761313ff'),
-            ('cariesX', '#0c902fff'),
-            ('fisuras', '#c2d814ff'),
-            ('puente', '#0c0e01ff')
+        // Insert new pathologies with status only
+        $this->addSql("INSERT INTO pathology (description, status) VALUES 
+            ('Caries', 'pending'),
+            ('Caries', 'completed'),
+            ('Obturacion', 'pending'),
+            ('Obturacion', 'completed'),
+            ('Corona', 'pending'),
+            ('Corona', 'completed'),
+            ('Ausente', 'completed'),
+            ('Endodoncia', 'pending'),
+            ('Endodoncia', 'completed'),
+            ('Exodoncia', 'pending'),
+            ('Exodoncia', 'completed'),
+            ('Exodonciaort', 'pending'),
+            ('Exodonciaort', 'completed'),
+            ('Caries Radiográficas', 'completed'),
+            ('Sellado de fosas y fisuras', 'completed')
         ");
     }
 
