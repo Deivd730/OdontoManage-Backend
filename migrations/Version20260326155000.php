@@ -19,11 +19,13 @@ final class Version20260326155000 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE pathology MODIFY color VARCHAR(15) DEFAULT NULL');
+        // Check if color column exists before adding
+        $this->addSql('ALTER TABLE pathology ADD COLUMN IF NOT EXISTS color VARCHAR(15) DEFAULT NULL');
     }
 
     public function down(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE pathology MODIFY color VARCHAR(7) DEFAULT NULL');
+        // Check if color column exists before dropping
+        $this->addSql('ALTER TABLE pathology DROP COLUMN IF EXISTS color');
     }
 }
