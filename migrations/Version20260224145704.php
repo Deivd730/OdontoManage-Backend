@@ -216,12 +216,12 @@ final class Version20260224145704 extends AbstractMigration
             (5, 'active', 5, (SELECT id FROM tooth WHERE tooth_number = 11 LIMIT 1), (SELECT id FROM pathology WHERE description = 'Caries' LIMIT 1))
         ");
 
-          $this->addSql("INSERT INTO document (id, type, file_url, capture_date, patient_id) VALUES
-        (1, 'Radiografia', '/files/patient_1_rx.png', '2026-02-24', 1),
-        (2, 'Fotografia', '/files/patient_2_photo.png', '2026-02-24', 2),
-        (3, 'Consentimiento', '/files/patient_3_consent.pdf', '2026-02-24', 3),
-        (4, 'Radiografia', '/files/patient_4_rx.png', '2026-02-24', 4),
-        (5, 'Informe', '/files/patient_5_report.pdf', '2026-02-24', 5)
+        $this->addSql("INSERT INTO document (id, type, name, file_url, capture_date, patient_id) VALUES
+        (1, 'Radiografia', 'RX Paciente 1', '/files/patient_1_rx.png', '2026-02-24', 1),
+        (2, 'Fotografia', 'Foto Paciente 2', '/files/patient_2_photo.png', '2026-02-24', 2),
+        (3, 'Consentimiento', 'Consentimiento Paciente 3', '/files/patient_3_consent.pdf', '2026-02-24', 3),
+        (4, 'Radiografia', 'RX Paciente 4', '/files/patient_4_rx.png', '2026-02-24', 4),
+        (5, 'Informe', 'Informe Paciente 5', '/files/patient_5_report.pdf', '2026-02-24', 5)
     ");
     }
 

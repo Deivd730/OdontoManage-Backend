@@ -26,6 +26,10 @@ class Pathology
     #[Groups(['pathology:read', 'pathology:write'])]
     private ?\DateTimeInterface $minutes = null;
 
+    #[ORM\Column(length: 15, nullable: true)]
+    #[Groups(['pathology:read', 'pathology:write', 'odontogram:read', 'odontogram:write'])]
+    private ?string $color = null;
+
     #[ORM\OneToMany(mappedBy: 'pathology', targetEntity: ToothPathology::class)]
     private Collection $toothPathologies;
 
@@ -59,6 +63,18 @@ class Pathology
     public function setMinutes(?\DateTimeInterface $minutes): static
     {
         $this->minutes = $minutes;
+
+        return $this;
+    }
+
+    public function getColor(): ?string
+    {
+        return $this->color;
+    }
+
+    public function setColor(?string $color): static
+    {
+        $this->color = $color;
 
         return $this;
     }
