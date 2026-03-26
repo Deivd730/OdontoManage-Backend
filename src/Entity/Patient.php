@@ -93,6 +93,25 @@ class Patient
     #[Groups(['patient:read', 'patient:write'])]
     private ?string $medicationAllergies = null;
 
+    #[Assert\IsTrue(message: "You must accept medical treatment consent")]
+    #[ORM\Column(type: Types::BOOLEAN)]
+    #[Groups(['patient:read', 'patient:write'])]
+    private bool $medicalTreatmentConsent = false;
+
+    #[Assert\IsTrue(message: "You must accept anesthesia consent")]
+    #[ORM\Column(type: Types::BOOLEAN)]
+    #[Groups(['patient:read', 'patient:write'])]
+    private bool $anesthesiaConsent = false;
+
+    #[ORM\Column(type: Types::BOOLEAN)]
+    #[Groups(['patient:read', 'patient:write'])]
+    private bool $hasInfectiousDiseases = false;
+
+    #[Assert\NotBlank(message: "If patient has infectious diseases, specify which diseases.")]
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(['patient:read', 'patient:write'])]
+    private ?string $infectiousDiseases = null;
+
     #[Assert\NotBlank(message: "Registration date is required.")]
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     #[Groups(['patient:read', 'patient:write'])]
@@ -406,6 +425,50 @@ class Patient
             }
         }
 
+        return $this;
+    }
+
+    public function getMedicalTreatmentConsent(): bool
+    {
+        return $this->medicalTreatmentConsent;
+    }
+
+    public function setMedicalTreatmentConsent(bool $value): static
+    {
+        $this->medicalTreatmentConsent = $value;
+        return $this;
+    }
+
+    public function getAnesthesiaConsent(): bool
+    {
+        return $this->anesthesiaConsent;
+    }
+
+    public function setAnesthesiaConsent(bool $value): static
+    {
+        $this->anesthesiaConsent = $value;
+        return $this;
+    }
+
+    public function getHasInfectiousDiseases(): bool
+    {
+        return $this->hasInfectiousDiseases;
+    }
+
+    public function setHasInfectiousDiseases(bool $value): static
+    {
+        $this->hasInfectiousDiseases = $value;
+        return $this;
+    }
+
+    public function getInfectiousDiseases(): ?string
+    {
+        return $this->infectiousDiseases;
+    }
+
+    public function setInfectiousDiseases(?string $value): static
+    {
+        $this->infectiousDiseases = $value;
         return $this;
     }
 }
