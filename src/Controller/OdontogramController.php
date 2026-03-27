@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\Pathology;
 use App\Entity\Odontogram;
 use App\Repository\AppointmentRepository;
 use App\Repository\OdontogramRepository;
@@ -106,9 +107,9 @@ class OdontogramController extends AbstractController
                         return new JsonResponse(['error' => "El diente número $toothNumber no existe en la base de datos"], 400);
                     }
 
-                    $pathologyId = $tpData['pathology']['id'] ?? null;
-                    $pathology = $this->pathologyRepository->find($pathologyId);
+                    $pathology = $this->resolvePathologyFromPayload($tpData);
                     if (!$pathology) {
+                        $pathologyId = $tpData['pathology']['id'] ?? ($tpData['pathologyId'] ?? null);
                         return new JsonResponse(['error' => "La patología ID $pathologyId no existe"], 400);
                     }
 
@@ -155,10 +156,10 @@ class OdontogramController extends AbstractController
                         return new JsonResponse(['error' => "El diente número $toothNumber no existe en la base de datos"], 400);
                     }
                     
-                    $pathologyId = $tpData['pathology']['id'] ?? null;
-                    $pathology = $this->pathologyRepository->find($pathologyId);
+                    $pathology = $this->resolvePathologyFromPayload($tpData);
                     
                     if (!$pathology) {
+                        $pathologyId = $tpData['pathology']['id'] ?? ($tpData['pathologyId'] ?? null);
                         return new JsonResponse(['error' => "La patología ID $pathologyId no existe"], 400);
                     }
 
@@ -242,5 +243,99 @@ class OdontogramController extends AbstractController
         $today = new \DateTimeImmutable('today');
 
         return $birthDate->diff($today)->y < 12;
+    }
+
+    private function resolvePathologyFromPayload(array $tpData): ?Pathology
+    {
+        $pathologyData = $tpData['pathology'] ?? null;
+        $pathologyId = $pathologyData['id'] ?? ($tpData['pathologyId'] ?? null);
+
+        if ($pathologyId !== null && is_numeric((string) $pathologyId)) {
+            $pathology = $this->pathologyRepository->find((int) $pathologyId);
+            if ($pathology instanceof Pathology) {
+                return $pathology;
+            }
+        }
+
+        $candidateNames = [];
+
+        foreach ([
+            $pathologyData['description'] ?? null,
+            $pathologyData['name'] ?? null,
+            $pathologyData['label'] ?? null,
+            $tpData['pathologyDescription'] ?? null,
+            $tpData['pathologyName'] ?? null,
+        ] as $name) {
+            if (is_string($name) && trim($name) !== '') {
+                $candidateNames[] = trim($name);
+            }
+        }
+
+        $legacyNameById = [
+            1 => 'Caries',
+            2 => 'Caries',
+            3 => 'Obturacion',
+            4 => 'Obturacion',
+            5 => 'Corona',
+            6 => 'Corona',
+            7 => 'Ausente',
+            8 => 'Endodoncia',
+            9 => 'Endodoncia',
+            10 => 'Exodoncia',
+            11 => 'Exodonciaort',
+            12 => 'Exodonciaort',
+            13 => 'cariesX',
+            14 => 'fisuras',
+            15 => 'puente',
+        ];
+
+        if ($pathologyId !== null && is_numeric((string) $pathologyId)) {
+            $legacyId = (int) $pathologyId;
+            if (isset($legacyNameById[$legacyId])) {
+                $candidateNames[] = $legacyNameById[$legacyId];
+            }
+        }
+
+        if ($candidateNames === []) {
+            return null;
+        }
+
+        $allPathologies = $this->pathologyRepository->findAll();
+        $normalizedCandidates = array_map([$this, 'normalizePathologyLabel'], $candidateNames);
+
+        foreach ($allPathologies as $pathology) {
+            $normalizedDescription = $this->normalizePathologyLabel((string) $pathology->getDescription());
+            foreach ($normalizedCandidates as $candidate) {
+                if ($candidate !== '' && $normalizedDescription === $candidate) {
+                    return $pathology;
+                }
+            }
+        }
+
+        foreach ($allPathologies as $pathology) {
+            $normalizedDescription = $this->normalizePathologyLabel((string) $pathology->getDescription());
+            foreach ($normalizedCandidates as $candidate) {
+                if (
+                    $candidate !== '' &&
+                    (str_contains($normalizedDescription, $candidate) || str_contains($candidate, $normalizedDescription))
+                ) {
+                    return $pathology;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private function normalizePathologyLabel(string $value): string
+    {
+        $ascii = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
+        if ($ascii === false) {
+            $ascii = $value;
+        }
+
+        $normalized = strtolower($ascii);
+
+        return preg_replace('/[^a-z0-9]+/', '', $normalized) ?? '';
     }
 }
