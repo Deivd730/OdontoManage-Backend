@@ -180,7 +180,7 @@ class AppointmentController extends AbstractController
      */
     private function findAvailableBox(\DateTime $visitDate, \App\Entity\Treatment $treatment): ?\App\Entity\Box
     {
-        $durationMinutes = $treatment->getMinutes();
+        $durationMinutes = $treatment->getDurationMinutes();
         $bufferMinutes = 5;
 
         // Get all boxes and check which one is available
@@ -216,7 +216,7 @@ class AppointmentController extends AbstractController
                 }
 
                 $otherStart = \DateTime::createFromInterface($other->getVisitDate());
-                $otherEnd = (clone $otherStart)->modify('+' . $otherTreatment->getMinutes() . ' minutes');
+                $otherEnd = (clone $otherStart)->modify('+' . $otherTreatment->getDurationMinutes() . ' minutes');
                 $otherEndWithBuffer = (clone $otherEnd)->modify('+' . $bufferMinutes . ' minutes');
 
                 if ($otherStart < $endWithBuffer && $otherEndWithBuffer > $visitDate) {

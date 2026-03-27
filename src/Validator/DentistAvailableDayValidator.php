@@ -34,13 +34,16 @@ class DentistAvailableDayValidator extends ConstraintValidator
             return;
         }
 
-        // Use ISO-8601 day of week number (1=Mon ... 7=Sun)
-        $dayOfWeek = (int) $visitDate->format('N');
+        // Get day of week (Mon, Tue, Wed, Thu, Fri, Sat, Sun)
+        $dayOfWeek = $visitDate->format('D');
+        
+        // Parse available days (format: "Mon,Wed,Fri")
+        $availableDaysArray = array_map('trim', explode(',', $availableDays));
 
-        if ($dayOfWeek !== $availableDays) {
+        if (!in_array($dayOfWeek, $availableDaysArray, true)) {
             $this->context->buildViolation($constraint->message)
-            ->setParameter('{{ day }}', (string) $dayOfWeek)
-            ->setParameter('{{ availableDays }}', (string) $availableDays)
+                ->setParameter('{{ day }}', $dayOfWeek)
+                ->setParameter('{{ availableDays }}', $availableDays)
                 ->atPath('dentist')
                 ->addViolation();
         }

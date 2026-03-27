@@ -26,7 +26,7 @@ class Treatment
 
     #[ORM\Column]
     #[Groups(['treatment:read', 'treatment:write', 'appointment:read'])]
-    private ?int $minutes = null;
+    private ?int $durationMinutes = null;
 
     public function getId(): ?int
     {
@@ -57,14 +57,14 @@ class Treatment
         return $this;
     }
 
-    public function getMinutes(): ?int
+    public function getDurationMinutes(): ?int
     {
-        return $this->minutes;
+        return $this->durationMinutes;
     }
 
-    public function setMinutes(int $minutes): static
+    public function setDurationMinutes(int $durationMinutes): static
     {
-        $this->minutes = $minutes;
+        $this->durationMinutes = $durationMinutes;
 
         return $this;
     }

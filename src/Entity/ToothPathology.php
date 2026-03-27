@@ -19,12 +19,12 @@ class ToothPathology
     #[ORM\JoinColumn(nullable: false)]
     private ?Odontogram $odontogram = null;
 
-    #[ORM\ManyToOne(targetEntity: Tooth::class, inversedBy: 'toothPathologies')]
+    #[ORM\ManyToOne(targetEntity: Tooth::class)]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['odontogram:read', 'odontogram:write'])]
     private ?Tooth $tooth = null;
 
-    #[ORM\ManyToOne(targetEntity: Pathology::class, inversedBy: 'toothPathologies')]
+    #[ORM\ManyToOne(targetEntity: Pathology::class)]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['odontogram:read', 'odontogram:write'])]
     private ?Pathology $pathology = null;

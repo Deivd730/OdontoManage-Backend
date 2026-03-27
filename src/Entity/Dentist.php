@@ -45,9 +45,13 @@ class Dentist implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups(['dentist:read', 'dentist:write', 'appointment:read'])]
     private ?string $lastName = null;
 
-    #[ORM\Column(nullable: true)]
+    #[ORM\Column(length: 255, nullable: true)]
     #[Groups(['dentist:read', 'dentist:write', 'appointment:read'])]
-    private ?int $availableDays = null;
+    private ?string $specialty = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['dentist:read', 'dentist:write', 'appointment:read'])]
+    private ?string $availableDays = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     #[Groups(['dentist:read', 'dentist:write'])]
@@ -60,16 +64,15 @@ class Dentist implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\JoinColumn(nullable: true)]
     private ?Box $box = null;
 
-    #[ORM\OneToOne(targetEntity: Pathology::class, inversedBy: 'dentist')]
-    #[ORM\JoinColumn(nullable: true, unique: true)]
-    #[Groups(['dentist:read', 'dentist:write', 'appointment:read'])]
-    private ?Pathology $pathology = null;
+    #[ORM\OneToMany(mappedBy: 'dentist', targetEntity: Patient::class)]
+    private Collection $patients;
 
     #[ORM\OneToMany(mappedBy: 'dentist', targetEntity: Appointment::class)]
     private Collection $appointments;
 
     public function __construct()
     {
+        $this->patients = new ArrayCollection();
         $this->appointments = new ArrayCollection();
     }
 
@@ -174,12 +177,24 @@ class Dentist implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getAvailableDays(): ?int
+    public function getSpecialty(): ?string
+    {
+        return $this->specialty;
+    }
+
+    public function setSpecialty(?string $specialty): static
+    {
+        $this->specialty = $specialty;
+
+        return $this;
+    }
+
+    public function getAvailableDays(): ?string
     {
         return $this->availableDays;
     }
 
-    public function setAvailableDays(?int $availableDays): static
+    public function setAvailableDays(?string $availableDays): static
     {
         $this->availableDays = $availableDays;
 
@@ -220,17 +235,30 @@ class Dentist implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getPathology(): ?Pathology
+    /**
+     * @return Collection<int, Patient>
+     */
+    public function getPatients(): Collection
     {
-        return $this->pathology;
+        return $this->patients;
     }
 
-    public function setPathology(?Pathology $pathology): static
+    public function addPatient(Patient $patient): static
     {
-        $this->pathology = $pathology;
+        if (!$this->patients->contains($patient)) {
+            $this->patients->add($patient);
+            $patient->setDentist($this);
+        }
 
-        if ($pathology !== null && $pathology->getDentist() !== $this) {
-            $pathology->setDentist($this);
+        return $this;
+    }
+
+    public function removePatient(Patient $patient): static
+    {
+        if ($this->patients->removeElement($patient)) {
+            if ($patient->getDentist() === $this) {
+                $patient->setDentist(null);
+            }
         }
 
         return $this;
