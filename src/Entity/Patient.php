@@ -121,7 +121,7 @@ class Patient
     #[Groups(['patient:write'])]
     private ?File $profileImageFile = null;
 
-    #[ORM\Column(length: 255, nullable: true)]
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
     #[Groups(['patient:read'])]
     private ?string $profileImageName = null;
 

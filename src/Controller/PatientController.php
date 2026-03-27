@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Odontogram;
 use App\Entity\Patient;
 use App\Repository\PatientRepository;
+use Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -183,14 +184,35 @@ class PatientController extends AbstractController
 
     #[Route('/{id}', methods: ['DELETE'])]
     public function delete(Patient $patient): JsonResponse
-    {   
+    {
         // Only ROLE_AUXILIAR and ROLE_ADMIN can delete patients
         if (!$this->isGranted('ROLE_AUXILIAR') && !$this->isGranted('ROLE_ADMIN')) {
             return new JsonResponse(['error' => 'Only auxiliars and admins can delete patients'], Response::HTTP_FORBIDDEN);
         }
 
-        $this->entityManager->remove($patient);
-        $this->entityManager->flush();
+        try {
+            foreach ($patient->getOdontograms()->toArray() as $odontogram) {
+                $this->entityManager->remove($odontogram);
+            }
+
+            foreach ($patient->getAppointments()->toArray() as $appointment) {
+                $this->entityManager->remove($appointment);
+            }
+
+            foreach ($patient->getDocuments()->toArray() as $document) {
+                $this->entityManager->remove($document);
+            }
+
+            $this->entityManager->remove($patient);
+            $this->entityManager->flush();
+        } catch (ForeignKeyConstraintViolationException) {
+            return new JsonResponse(
+                ['error' => 'No se puede eliminar el paciente porque tiene registros relacionados.'],
+                Response::HTTP_CONFLICT
+            );
+        } catch (\Throwable $e) {
+            return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
+        }
 
         return new JsonResponse( ['message' => 'Patient deleted successfully'], Response::HTTP_OK);
     }
