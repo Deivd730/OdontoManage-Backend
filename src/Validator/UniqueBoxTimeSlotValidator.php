@@ -34,7 +34,7 @@ class UniqueBoxTimeSlotValidator extends ConstraintValidator
             return;
         }
 
-        $durationMinutes = $treatment->getDurationMinutes();
+        $durationMinutes = $treatment->getMinutes();
         if (!$durationMinutes) {
             return; // Cannot validate without duration
         }
@@ -88,7 +88,7 @@ class UniqueBoxTimeSlotValidator extends ConstraintValidator
             }
 
             $otherStart = \DateTime::createFromInterface($other->getVisitDate());
-            $otherEnd = (clone $otherStart)->modify('+' . $otherTreatment->getDurationMinutes() . ' minutes');
+            $otherEnd = (clone $otherStart)->modify('+' . $otherTreatment->getMinutes() . ' minutes');
             $otherEndWithBuffer = (clone $otherEnd)->modify('+' . $bufferMinutes . ' minutes');
 
             // Overlap if otherStart < thisEndWithBuffer AND otherEndWithBuffer > thisStart

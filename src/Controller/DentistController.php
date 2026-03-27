@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Dentist;
 use App\Repository\DentistRepository;
+use App\Repository\PathologyRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -19,6 +20,7 @@ class DentistController extends AbstractController
 {
     public function __construct(
         private DentistRepository $dentistRepository,
+        private PathologyRepository $pathologyRepository,
         private EntityManagerInterface $entityManager,
         private SerializerInterface $serializer,
         private ValidatorInterface $validator,
@@ -47,12 +49,22 @@ class DentistController extends AbstractController
     public function create(Request $request): JsonResponse
     {
         try {
+            $payload = json_decode($request->getContent(), true);
+            if (!is_array($payload)) {
+                return new JsonResponse(['error' => 'Invalid JSON payload'], Response::HTTP_BAD_REQUEST);
+            }
+
             $dentist = $this->serializer->deserialize(
                 $request->getContent(),
                 Dentist::class,
                 'json',
                 ['groups' => 'dentist:write']
             );
+
+            $pathologyError = $this->assignPathologyFromPayload($dentist, $payload);
+            if ($pathologyError !== null) {
+                return $pathologyError;
+            }
 
             // Ensure dentist always has ROLE_DENTIST
             $dentist->setRoles(['ROLE_DENTIST']);
@@ -83,12 +95,22 @@ class DentistController extends AbstractController
     public function update(Dentist $dentist, Request $request): JsonResponse
     {
         try {
+            $payload = json_decode($request->getContent(), true);
+            if (!is_array($payload)) {
+                return new JsonResponse(['error' => 'Invalid JSON payload'], Response::HTTP_BAD_REQUEST);
+            }
+
             $this->serializer->deserialize(
                 $request->getContent(),
                 Dentist::class,
                 'json',
                 ['object_to_populate' => $dentist, 'groups' => 'dentist:write']
             );
+
+            $pathologyError = $this->assignPathologyFromPayload($dentist, $payload);
+            if ($pathologyError !== null) {
+                return $pathologyError;
+            }
 
             // Ensure dentist always has ROLE_DENTIST
             $dentist->setRoles(['ROLE_DENTIST']);
@@ -118,12 +140,22 @@ class DentistController extends AbstractController
     public function patch(Dentist $dentist, Request $request): JsonResponse
     {
         try {
+            $payload = json_decode($request->getContent(), true);
+            if (!is_array($payload)) {
+                return new JsonResponse(['error' => 'Invalid JSON payload'], Response::HTTP_BAD_REQUEST);
+            }
+
             $this->serializer->deserialize(
                 $request->getContent(),
                 Dentist::class,
                 'json',
                 ['object_to_populate' => $dentist, 'groups' => 'dentist:write']
             );
+
+            $pathologyError = $this->assignPathologyFromPayload($dentist, $payload);
+            if ($pathologyError !== null) {
+                return $pathologyError;
+            }
 
             // Ensure dentist always has ROLE_DENTIST
             $dentist->setRoles(['ROLE_DENTIST']);
@@ -156,5 +188,28 @@ class DentistController extends AbstractController
         $this->entityManager->flush();
 
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+    }
+
+    private function assignPathologyFromPayload(Dentist $dentist, array $payload): ?JsonResponse
+    {
+        if (!array_key_exists('pathology', $payload) && !array_key_exists('pathologyId', $payload)) {
+            return null;
+        }
+
+        $pathologyId = $payload['pathology'] ?? $payload['pathologyId'];
+        if ($pathologyId === null || $pathologyId === '') {
+            $dentist->setPathology(null);
+
+            return null;
+        }
+
+        $pathology = $this->pathologyRepository->find((int) $pathologyId);
+        if ($pathology === null) {
+            return new JsonResponse(['error' => 'Pathology not found'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $dentist->setPathology($pathology);
+
+        return null;
     }
 }

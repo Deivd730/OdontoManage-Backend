@@ -20,7 +20,7 @@ class Document
     #[Groups(['document:read'])]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(targetEntity: Patient::class)]
+    #[ORM\ManyToOne(targetEntity: Patient::class, inversedBy: 'documents')]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['document:read'])]
     private ?Patient $patient = null;
