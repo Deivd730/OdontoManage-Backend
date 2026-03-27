@@ -37,6 +37,9 @@ class Pathology
     #[ORM\OneToMany(mappedBy: 'pathology', targetEntity: ToothPathology::class)]
     private Collection $toothPathologies;
 
+    #[ORM\OneToOne(mappedBy: 'pathology', targetEntity: Dentist::class)]
+    private ?Dentist $dentist = null;
+
     public function __construct()
     {
         $this->toothPathologies = new ArrayCollection();
@@ -119,6 +122,22 @@ class Pathology
             if ($toothPathology->getPathology() === $this) {
                 $toothPathology->setPathology(null);
             }
+        }
+
+        return $this;
+    }
+
+    public function getDentist(): ?Dentist
+    {
+        return $this->dentist;
+    }
+
+    public function setDentist(?Dentist $dentist): static
+    {
+        $this->dentist = $dentist;
+
+        if ($dentist !== null && $dentist->getPathology() !== $this) {
+            $dentist->setPathology($this);
         }
 
         return $this;

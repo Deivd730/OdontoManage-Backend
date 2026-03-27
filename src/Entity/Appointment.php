@@ -22,17 +22,17 @@ class Appointment
     #[Groups(['appointment:read', 'odontogram:read'])]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(targetEntity: Patient::class)]
+    #[ORM\ManyToOne(targetEntity: Patient::class, inversedBy: 'appointments')]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['appointment:read', 'appointment:write'])]
     private ?Patient $patient = null;
 
-    #[ORM\ManyToOne(targetEntity: Dentist::class)]
+    #[ORM\ManyToOne(targetEntity: Dentist::class, inversedBy: 'appointments')]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['appointment:read', 'appointment:write'])]
     private ?Dentist $dentist = null;
 
-    #[ORM\ManyToOne(targetEntity: Box::class)]
+    #[ORM\ManyToOne(targetEntity: Box::class, inversedBy: 'appointments')]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['appointment:read', 'appointment:write'])]
     private ?Box $box = null;

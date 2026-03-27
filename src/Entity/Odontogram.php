@@ -21,12 +21,12 @@ class Odontogram
     #[Groups(['odontogram:read'])]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(targetEntity: Patient::class)]
+    #[ORM\ManyToOne(targetEntity: Patient::class, inversedBy: 'odontograms')]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['odontogram:read', 'odontogram:write'])]
     private ?Patient $patient = null;
 
-    #[ORM\ManyToOne(targetEntity: Appointment::class)]
+    #[ORM\ManyToOne(targetEntity: Appointment::class, inversedBy: 'odontograms')]
     #[ORM\JoinColumn(nullable: true)]
     #[Groups(['odontogram:read', 'odontogram:write'])]
     private ?Appointment $appointment = null;

@@ -128,10 +128,6 @@ class Patient
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $updatedAt = null;
 
-    #[ORM\ManyToOne(targetEntity: Dentist::class, inversedBy: 'patients')]
-    #[ORM\JoinColumn(nullable: true)]
-    private ?Dentist $dentist = null;
-
     #[ORM\OneToMany(mappedBy: 'patient', targetEntity: Document::class)]
     private Collection $documents;
 
@@ -327,18 +323,6 @@ class Patient
     public function setUpdatedAt(?\DateTimeImmutable $updatedAt): void
     {
         $this->updatedAt = $updatedAt;
-    }
-
-    public function getDentist(): ?Dentist
-    {
-        return $this->dentist;
-    }
-
-    public function setDentist(?Dentist $dentist): static
-    {
-        $this->dentist = $dentist;
-
-        return $this;
     }
 
     /**
