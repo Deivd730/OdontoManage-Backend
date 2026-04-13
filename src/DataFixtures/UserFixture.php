@@ -15,13 +15,8 @@ class UserFixture extends Fixture
 
     public function load(ObjectManager $manager): void
     {
-        $user = new User();
-        $user->setName('Admin');
-        $user->setEmail('admin@test.com');
-        $user->setRoles(['ROLE_USER']);
-        $user->setPassword($this->passwordHasher->hashPassword($user, '123456'));
-
-        $manager->persist($user);
-        $manager->flush();
+        // Los users se cargan desde la migración inicial
+        // Este fixture podría usarse para agregar más users dinámicamente
+        // Por ahora está vacío ya que están en la migración
     }
 }

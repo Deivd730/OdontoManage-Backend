@@ -25,10 +25,10 @@ final class Version20260224145704 extends AbstractMigration
         $this->addSql('CREATE TABLE dentist (id INT AUTO_INCREMENT NOT NULL, email VARCHAR(180) NOT NULL, roles JSON NOT NULL, password VARCHAR(255) NOT NULL, first_name VARCHAR(255) NOT NULL, last_name VARCHAR(255) NOT NULL, specialty VARCHAR(255) DEFAULT NULL, available_days VARCHAR(255) DEFAULT NULL, phone VARCHAR(255) DEFAULT NULL, updated_at DATETIME DEFAULT NULL, box_id INT DEFAULT NULL, UNIQUE INDEX UNIQ_6C8FB839E7927C74 (email), INDEX IDX_6C8FB839D8177B3F (box_id), PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci`');
         $this->addSql('CREATE TABLE document (id INT AUTO_INCREMENT NOT NULL, type VARCHAR(255) NOT NULL, name VARCHAR(255) NOT NULL, file_url VARCHAR(255) NOT NULL, capture_date DATE NOT NULL, patient_id INT NOT NULL, INDEX IDX_D8698A766B899279 (patient_id), PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci`');
         $this->addSql('CREATE TABLE odontogram (id INT AUTO_INCREMENT NOT NULL, patient_id INT NOT NULL, appointment_id INT DEFAULT NULL, INDEX IDX_251BF9406B899279 (patient_id), INDEX IDX_251BF940E5B533F9 (appointment_id), PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci`');
-        $this->addSql('CREATE TABLE pathology (id INT AUTO_INCREMENT NOT NULL, description VARCHAR(255) NOT NULL, minutes TIME DEFAULT NULL, PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci`');
+        $this->addSql('CREATE TABLE pathology (id INT AUTO_INCREMENT NOT NULL, description VARCHAR(255) NOT NULL, color VARCHAR(255) DEFAULT NULL, minutes TIME DEFAULT NULL, PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci`');
         $this->addSql('CREATE TABLE patient (id INT AUTO_INCREMENT NOT NULL, first_name VARCHAR(100) NOT NULL, last_name VARCHAR(100) NOT NULL, national_id VARCHAR(20) NOT NULL, social_security_number VARCHAR(20) DEFAULT NULL, phone VARCHAR(20) DEFAULT NULL, email VARCHAR(150) DEFAULT NULL, address VARCHAR(255) DEFAULT NULL, billing_data LONGTEXT DEFAULT NULL, health_status LONGTEXT DEFAULT NULL, family_history LONGTEXT DEFAULT NULL, lifestyle_habits LONGTEXT DEFAULT NULL, medication_allergies LONGTEXT DEFAULT NULL, registration_date DATETIME NOT NULL, profile_image_name LONGTEXT DEFAULT NULL, updated_at DATETIME DEFAULT NULL, dentist_id INT DEFAULT NULL, INDEX IDX_1ADAD7EB1CE0A142 (dentist_id), PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci`');
         $this->addSql('CREATE TABLE tooth (id INT AUTO_INCREMENT NOT NULL, tooth_number INT NOT NULL, description VARCHAR(255) DEFAULT NULL, PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci`');
-        $this->addSql('CREATE TABLE tooth_pathology (id INT AUTO_INCREMENT NOT NULL, tooth_face INT NOT NULL, status VARCHAR(255) NOT NULL, odontogram_id INT NOT NULL, tooth_id INT NOT NULL, pathology_id INT NOT NULL, INDEX IDX_1763929259C0DBCD (odontogram_id), INDEX IDX_17639292A2A44441 (tooth_id), INDEX IDX_17639292CE86795D (pathology_id), PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci`');
+        $this->addSql('CREATE TABLE tooth_pathology (id INT AUTO_INCREMENT NOT NULL, tooth_face INT NOT NULL, odontogram_id INT NOT NULL, tooth_id INT NOT NULL, pathology_id INT NOT NULL, INDEX IDX_1763929259C0DBCD (odontogram_id), INDEX IDX_17639292A2A44441 (tooth_id), INDEX IDX_17639292CE86795D (pathology_id), PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci`');
         $this->addSql('CREATE TABLE treatment (id INT AUTO_INCREMENT NOT NULL, name VARCHAR(255) NOT NULL, description LONGTEXT DEFAULT NULL, duration_minutes INT NOT NULL, PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci`');
         $this->addSql('CREATE TABLE users (id INT AUTO_INCREMENT NOT NULL, name VARCHAR(255) NOT NULL, email VARCHAR(180) NOT NULL, roles JSON NOT NULL, password VARCHAR(255) NOT NULL, UNIQUE INDEX UNIQ_1483A5E9E7927C74 (email), PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci`');
         $this->addSql('CREATE TABLE messenger_messages (id BIGINT AUTO_INCREMENT NOT NULL, body LONGTEXT NOT NULL, headers LONGTEXT NOT NULL, queue_name VARCHAR(190) NOT NULL, created_at DATETIME NOT NULL, available_at DATETIME NOT NULL, delivered_at DATETIME DEFAULT NULL, INDEX IDX_75EA56E0FB7336F0E3BD61CE16BA31DBBF396750 (queue_name, available_at, delivered_at, id), PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci`');
@@ -47,57 +47,38 @@ final class Version20260224145704 extends AbstractMigration
         $this->addSql('ALTER TABLE tooth_pathology ADD CONSTRAINT FK_17639292CE86795D FOREIGN KEY (pathology_id) REFERENCES pathology (id)');
         $this->addSql('ALTER TABLE document ADD updated_at DATETIME DEFAULT NULL, CHANGE file_url file_url VARCHAR(255) DEFAULT NULL');
 
+        $this->addSql("INSERT INTO pathology (description, color) VALUES
+            ('Caries', '#f81307ff'),
+            ('Obturacion', '#0074D9'),
+            ('Caries vista en radiografia', '#07fd24ff'),
+            ('Ausencia Natural', '#000000ff'),
+            ('Sellado de fosas y fisuras', '#f9f914ff')
+        ");
+
         $this->addSql("INSERT INTO box (id, name, status) VALUES
-            (1, 'Box Norte', 'available'),
-            (2, 'Box Sur', 'available')
+            (1, 'Box 1', 'available'),
+            (2, 'Box 2', 'available')
         ");
 
         $this->addSql("INSERT INTO dentist (id, email, roles, password, first_name, last_name, specialty, available_days, phone, updated_at, box_id) VALUES
-            (1, 'ana.garcia@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$4S2gNqEVlx7k9JrLmP5Q.u0W3X6Y9Z2B5C8D1E4F7G0H3K6N9Q', 'Ana', 'Garcia', 'Ortodoncia', 'Mon', '600111222', '2026-02-24 09:00:00', NULL),
-            (2, 'luis.martin@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$4S2gNqEVlx7k9JrLmP5Q.u0W3X6Y9Z2B5C8D1E4F7G0H3K6N9Q', 'Luis', 'Martin', 'Endodoncia', 'Tue', '600333444', '2026-02-24 09:05:00', NULL),
-            (3, 'marta.suarez@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$4S2gNqEVlx7k9JrLmP5Q.u0W3X6Y9Z2B5C8D1E4F7G0H3K6N9Q', 'Marta', 'Suarez', 'Protesis', 'Wed', '600555666', '2026-02-24 09:10:00', NULL),
-            (4, 'pedro.alvarez@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$4S2gNqEVlx7k9JrLmP5Q.u0W3X6Y9Z2B5C8D1E4F7G0H3K6N9Q', 'Pedro', 'Alvarez', 'Implantología', 'Thu', '600777888', '2026-02-24 09:15:00', NULL),
-            (5, 'laura.gomez@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$4S2gNqEVlx7k9JrLmP5Q.u0W3X6Y9Z2B5C8D1E4F7G0H3K6N9Q', 'Laura', 'Gomez', 'Odontopediatría', 'Fri', '600999000', '2026-02-24 09:20:00', NULL)
+            (1, 'ana.garcia@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$4S2gNqEVlx7k9JrLmP5Q.u0W3X6Y9Z2B5C8D1E4F7G0H3K6N9Q', 'Ana', 'Garcia', 'Obturación', 'Mon', '600111222', '2026-02-24 09:00:00', NULL),
+            (2, 'luis.martin@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$4S2gNqEVlx7k9JrLmP5Q.u0W3X6Y9Z2B5C8D1E4F7G0H3K6N9Q', 'Luis', 'Martin', 'Exodoncia', 'Tue', '600333444', '2026-02-24 09:05:00', NULL),
+            (3, 'marta.suarez@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$4S2gNqEVlx7k9JrLmP5Q.u0W3X6Y9Z2B5C8D1E4F7G0H3K6N9Q', 'Marta', 'Suarez', 'Puente', 'Wed', '600555666', '2026-02-24 09:10:00', NULL),
+            (4, 'pedro.alvarez@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$4S2gNqEVlx7k9JrLmP5Q.u0W3X6Y9Z2B5C8D1E4F7G0H3K6N9Q', 'Pedro', 'Alvarez', 'Corona', 'Thu', '600777888', '2026-02-24 09:15:00', NULL),
+            (5, 'javier.gomez@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$4S2gNqEVlx7k9JrLmP5Q.u0W3X6Y9Z2B5C8D1E4F7G0H3K6N9Q', 'Javier', 'Gomez', 'Endodoncia', 'Fri', '600999000', '2026-02-24 09:20:00', NULL),
+            (6, 'jorge.martinez@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$4S2gNqEVlx7k9JrLmP5Q.u0W3X6Y9Z2B5C8D1E4F7G0H3K6N9Q', 'Jorge', 'Martinez', 'Obturación', 'Mon', '600000111', '2026-02-24 09:25:00', NULL),
+            (7, 'sofia.lopez@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$4S2gNqEVlx7k9JrLmP5Q.u0W3X6Y9Z2B5C8D1E4F7G0H3K6N9Q', 'Sofia', 'Lopez', 'Exodoncia', 'Tue', '600222333', '2026-02-24 09:30:00', NULL),
+            (8, 'carlos.perez@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$4S2gNqEVlx7k9JrLmP5Q.u0W3X6Y9Z2B5C8D1E4F7G0H3K6N9Q', 'Carlos', 'Perez', 'Puente', 'Wed', '600444555', '2026-02-24 09:35:00', NULL),
+            (9, 'laura.martinez@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$4S2gNqEVlx7k9JrLmP5Q.u0W3X6Y9Z2B5C8D1E4F7G0H3K6N9Q', 'Laura', 'Martinez', 'Corona', 'Thu', '600666777', '2026-02-24 09:40:00', NULL),
+            (10, 'pepe.garcia@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$4S2gNqEVlx7k9JrLmP5Q.u0W3X6Y9Z2B5C8D1E4F7G0H3K6N9Q', 'Pepe', 'Garcia', 'Endodoncia', 'Fri', '600888999', '2026-02-24 09:45:00', NULL)
         ");
 
         $this->addSql("INSERT INTO treatment (id, name, description, duration_minutes) VALUES
-            (1, 'Limpieza', 'Higiene dental basica', 30),
-            (2, 'Empaste', 'Restauracion de caries', 45),
-            (3, 'Endodoncia', 'Tratamiento de conductos', 90)
-        ");
-
-        // Insertar patologías completas
-        $this->addSql("INSERT INTO pathology (description, minutes) VALUES
-            ('Caries', NULL),
-            ('Obturación (empaste)', NULL),
-            ('Corona', NULL),
-            ('Endodoncia (tratamiento de conducto)', NULL),
-            ('Extracción', NULL),
-            ('Fractura', NULL),
-            ('Ausente', NULL),
-            ('Implante', NULL),
-            ('Prótesis fija', NULL),
-            ('Prótesis removible', NULL),
-            ('Puente', NULL),
-            ('Diente incluido', NULL),
-            ('Diente en erupción', NULL),
-            ('Sellante', NULL),
-            ('Diastema', NULL),
-            ('Apiñamiento', NULL),
-            ('Abrasión', NULL),
-            ('Erosión', NULL),
-            ('Abfracción', NULL),
-            ('Mancha', NULL),
-            ('Gingivitis', NULL),
-            ('Periodontitis', NULL),
-            ('Cálculo (sarro)', NULL),
-            ('Placa bacteriana', NULL),
-            ('Sensibilidad', NULL),
-            ('Movilidad', NULL),
-            ('Fístula', NULL),
-            ('Absceso', NULL),
-            ('Quiste', NULL),
-            ('Lesión periapical', NULL)
+            (1, 'Obturación', 'Restauracion de caries', 40),
+            (2, 'Exodoncia', 'Extracción de piezas dentales', 30),
+            (3, 'Puente', 'Restauración de dientes perdidos', 60),
+            (4, 'Corona', 'Restauración de dientes con corona', 50),
+            (5, 'Endodoncia', 'Tratamiento de conductos', 90)
         ");
 
         // Insertar todos los dientes permanentes y temporales
@@ -193,11 +174,11 @@ final class Version20260224145704 extends AbstractMigration
         ");
 
         $this->addSql("INSERT INTO appointment (id, visit_date, consultation_reason, patient_id, dentist_id, box_id, treatment_id, parent_appointment_id) VALUES
-            (1, '2026-03-09 11:00:00', 'Revision general', 1, 1, 1, 1, NULL),
-            (2, '2026-03-10 11:30:00', 'Dolor molar', 2, 2, 1, 3, NULL),
-            (3, '2026-03-11 12:00:00', 'Caries', 3, 3, 1, 2, NULL),
-            (4, '2026-03-12 12:30:00', 'Limpieza anual', 4, 4, 2, 1, NULL),
-            (5, '2026-03-13 13:00:00', 'Sensibilidad dental', 5, 5, 1, 2, NULL)
+            (1, '2026-03-09 11:00:00', 'Caries', 1, 1, 1, 1, NULL),
+            (2, '2026-03-10 11:30:00', 'Obturación', 2, 2, 1, 3, NULL),
+            (3, '2026-03-11 12:00:00', 'Caries vista en radiografia', 3, 3, 1, 2, NULL),
+            (4, '2026-03-12 12:30:00', 'Puente', 4, 4, 2, 1, NULL),
+            (5, '2026-03-13 13:00:00', 'Endodoncia', 5, 5, 1, 2, NULL)
         ");
 
         $this->addSql("INSERT INTO odontogram (id, patient_id, appointment_id) VALUES
@@ -208,12 +189,12 @@ final class Version20260224145704 extends AbstractMigration
             (5, 5, 5)
         ");
 
-        $this->addSql("INSERT INTO tooth_pathology (tooth_face, status, odontogram_id, tooth_id, pathology_id) VALUES
-            (1, 'active', 1, (SELECT id FROM tooth WHERE tooth_number = 11 LIMIT 1), (SELECT id FROM pathology WHERE description = 'Caries' LIMIT 1)),
-            (2, 'active', 2, (SELECT id FROM tooth WHERE tooth_number = 36 LIMIT 1), (SELECT id FROM pathology WHERE description = 'Fractura' LIMIT 1)),
-            (3, 'active', 3, (SELECT id FROM tooth WHERE tooth_number = 21 LIMIT 1), (SELECT id FROM pathology WHERE description = 'Caries' LIMIT 1)),
-            (4, 'active', 4, (SELECT id FROM tooth WHERE tooth_number = 46 LIMIT 1), (SELECT id FROM pathology WHERE description = 'Gingivitis' LIMIT 1)),
-            (5, 'active', 5, (SELECT id FROM tooth WHERE tooth_number = 11 LIMIT 1), (SELECT id FROM pathology WHERE description = 'Caries' LIMIT 1))
+        $this->addSql("INSERT INTO tooth_pathology (tooth_face, odontogram_id, tooth_id, pathology_id) VALUES
+            (1, 1, (SELECT id FROM tooth WHERE tooth_number = 11 LIMIT 1), (SELECT id FROM pathology WHERE description = 'Caries' LIMIT 1)),
+            (2, 2, (SELECT id FROM tooth WHERE tooth_number = 36 LIMIT 1), (SELECT id FROM pathology WHERE description = 'Caries vista en radiografia' LIMIT 1)),
+            (3, 3, (SELECT id FROM tooth WHERE tooth_number = 21 LIMIT 1), (SELECT id FROM pathology WHERE description = 'Caries' LIMIT 1)),
+            (4, 4, (SELECT id FROM tooth WHERE tooth_number = 46 LIMIT 1), (SELECT id FROM pathology WHERE description = 'Ausencia Natural' LIMIT 1)),
+            (5, 5, (SELECT id FROM tooth WHERE tooth_number = 11 LIMIT 1), (SELECT id FROM pathology WHERE description = 'Caries' LIMIT 1))
         ");
 
         $this->addSql("INSERT INTO document (id, type, name, file_url, capture_date, patient_id) VALUES
