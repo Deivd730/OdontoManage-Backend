@@ -18,20 +18,8 @@ class DentistFixture extends Fixture
 
     public function load(ObjectManager $manager): void
     {
-        $dentist = new Dentist();
-        $dentist->setEmail('admin@test.com');
-        $dentist->setFirstName('Admin');
-        $dentist->setLastName('User');
-        $dentist->setRoles(['ROLE_USER']);
-
-        $hashedPassword = $this->passwordHasher->hashPassword(
-            $dentist,
-            '123456'
-        );
-
-        $dentist->setPassword($hashedPassword);
-
-        $manager->persist($dentist);
-        $manager->flush();
+        // Los dentists se cargan desde la migración inicial
+        // Este fixture podría usarse para agregar más dentists dinámicamente
+        // Por ahora está vacío ya que están en la migración
     }
 }

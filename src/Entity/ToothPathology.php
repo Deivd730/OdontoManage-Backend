@@ -33,10 +33,6 @@ class ToothPathology
     #[Groups(['odontogram:read', 'odontogram:write'])]
     private ?int $toothFace = null;
 
-    #[ORM\Column(length: 255)]
-    #[Groups(['odontogram:read', 'odontogram:write'])]
-    private ?string $status = null;
-
     public function getId(): ?int
     {
         return $this->id;
@@ -86,18 +82,6 @@ class ToothPathology
     public function setToothFace(int $toothFace): static
     {
         $this->toothFace = $toothFace;
-
-        return $this;
-    }
-
-    public function getStatus(): ?string
-    {
-        return $this->status;
-    }
-
-    public function setStatus(string $status): static
-    {
-        $this->status = $status;
 
         return $this;
     }
