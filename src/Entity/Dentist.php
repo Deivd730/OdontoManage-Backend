@@ -45,9 +45,10 @@ class Dentist implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups(['dentist:read', 'dentist:write', 'appointment:read'])]
     private ?string $lastName = null;
 
-    #[ORM\Column(length: 255, nullable: true)]
+    #[ORM\ManyToOne(targetEntity: Treatment::class)]
+    #[ORM\JoinColumn(nullable: true)]
     #[Groups(['dentist:read', 'dentist:write', 'appointment:read'])]
-    private ?string $specialty = null;
+    private ?Treatment $treatment = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     #[Groups(['dentist:read', 'dentist:write', 'appointment:read'])]
@@ -177,14 +178,14 @@ class Dentist implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getSpecialty(): ?string
+    public function getTreatment(): ?Treatment
     {
-        return $this->specialty;
+        return $this->treatment;
     }
 
-    public function setSpecialty(?string $specialty): static
+    public function setTreatment(?Treatment $treatment): static
     {
-        $this->specialty = $specialty;
+        $this->treatment = $treatment;
 
         return $this;
     }
