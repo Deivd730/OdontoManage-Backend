@@ -30,10 +30,6 @@ class Pathology
     #[Groups(['pathology:read', 'pathology:write', 'odontogram:read', 'odontogram:write'])]
     private ?string $color = null;
 
-    #[ORM\Column(length: 50, nullable: true)]
-    #[Groups(['pathology:read', 'pathology:write', 'odontogram:read', 'odontogram:write'])]
-    private ?string $status = null;
-
     #[ORM\OneToMany(mappedBy: 'pathology', targetEntity: ToothPathology::class)]
     private Collection $toothPathologies;
 
@@ -79,18 +75,6 @@ class Pathology
     public function setColor(?string $color): static
     {
         $this->color = $color;
-
-        return $this;
-    }
-
-    public function getStatus(): ?string
-    {
-        return $this->status;
-    }
-
-    public function setStatus(?string $status): static
-    {
-        $this->status = $status;
 
         return $this;
     }

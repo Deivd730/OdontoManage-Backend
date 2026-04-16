@@ -116,7 +116,6 @@ class OdontogramController extends AbstractController
                     $toothPathology->setTooth($tooth);
                     $toothPathology->setPathology($pathology);
                     $toothPathology->setToothFace($tpData['toothFace'] ?? 0);
-                    $toothPathology->setStatus($tpData['status'] ?? 'Activo');
                     $odontogram->addToothPathology($toothPathology);
                 }
             }
@@ -165,9 +164,7 @@ class OdontogramController extends AbstractController
 
                     $toothPathology->setTooth($tooth);
                     $toothPathology->setPathology($pathology);
-                    $toothPathology->setToothFace($tpData['toothFace'] ?? 0);
-                    $toothPathology->setStatus($tpData['status'] ?? 'Activo');
-                    
+                    $toothPathology->setToothFace($tpData['toothFace'] ?? 0);                    
                     $odontogram->addToothPathology($toothPathology);
                 }
             }
