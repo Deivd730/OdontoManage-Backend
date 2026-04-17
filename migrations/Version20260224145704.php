@@ -22,7 +22,8 @@ final class Version20260224145704 extends AbstractMigration
         // this up() migration is auto-generated, please modify it to your needs
         $this->addSql('CREATE TABLE appointment (id INT AUTO_INCREMENT NOT NULL, visit_date DATETIME NOT NULL, consultation_reason LONGTEXT DEFAULT NULL, patient_id INT NOT NULL, dentist_id INT NOT NULL, box_id INT NOT NULL, treatment_id INT NOT NULL, parent_appointment_id INT DEFAULT NULL, INDEX IDX_FE38F8446B899279 (patient_id), INDEX IDX_FE38F8441CE0A142 (dentist_id), INDEX IDX_FE38F844D8177B3F (box_id), INDEX IDX_FE38F844471C0366 (treatment_id), INDEX IDX_FE38F844FB6847F2 (parent_appointment_id), PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci`');
         $this->addSql('CREATE TABLE box (id INT AUTO_INCREMENT NOT NULL, name VARCHAR(255) NOT NULL, status VARCHAR(255) NOT NULL, PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci`');
-        $this->addSql('CREATE TABLE dentist (id INT AUTO_INCREMENT NOT NULL, email VARCHAR(180) NOT NULL, roles JSON NOT NULL, password VARCHAR(255) NOT NULL, first_name VARCHAR(255) NOT NULL, last_name VARCHAR(255) NOT NULL, treatment_id INT DEFAULT NULL, available_days VARCHAR(255) DEFAULT NULL, phone VARCHAR(255) DEFAULT NULL, updated_at DATETIME DEFAULT NULL, box_id INT DEFAULT NULL, UNIQUE INDEX UNIQ_6C8FB839E7927C74 (email), INDEX IDX_6C8FB839D8177B3F (box_id), INDEX IDX_6C8FB839471C0366 (treatment_id), PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci`');
+        $this->addSql('CREATE TABLE dentist (id INT AUTO_INCREMENT NOT NULL, email VARCHAR(180) NOT NULL, roles JSON NOT NULL, password VARCHAR(255) NOT NULL, first_name VARCHAR(255) NOT NULL, last_name VARCHAR(255) NOT NULL, available_days VARCHAR(255) DEFAULT NULL, phone VARCHAR(255) DEFAULT NULL, updated_at DATETIME DEFAULT NULL, box_id INT DEFAULT NULL, UNIQUE INDEX UNIQ_6C8FB839E7927C74 (email), INDEX IDX_6C8FB839D8177B3F (box_id), PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci`');
+        $this->addSql('CREATE TABLE dentist_treatment (dentist_id INT NOT NULL, treatment_id INT NOT NULL, INDEX IDX_D0AB91111CE0A142 (dentist_id), INDEX IDX_D0AB9111471C0366 (treatment_id), PRIMARY KEY(dentist_id, treatment_id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci`');
         $this->addSql('CREATE TABLE document (id INT AUTO_INCREMENT NOT NULL, type VARCHAR(255) NOT NULL, name VARCHAR(255) NOT NULL, file_url VARCHAR(255) NOT NULL, capture_date DATE NOT NULL, patient_id INT NOT NULL, INDEX IDX_D8698A766B899279 (patient_id), PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci`');
         $this->addSql('CREATE TABLE odontogram (id INT AUTO_INCREMENT NOT NULL, patient_id INT NOT NULL, appointment_id INT DEFAULT NULL, INDEX IDX_251BF9406B899279 (patient_id), INDEX IDX_251BF940E5B533F9 (appointment_id), PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci`');
         $this->addSql('CREATE TABLE pathology (id INT AUTO_INCREMENT NOT NULL, description VARCHAR(255) NOT NULL, color VARCHAR(255) DEFAULT NULL, minutes TIME DEFAULT NULL, PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci`');
@@ -38,7 +39,8 @@ final class Version20260224145704 extends AbstractMigration
         $this->addSql('ALTER TABLE appointment ADD CONSTRAINT FK_FE38F844471C0366 FOREIGN KEY (treatment_id) REFERENCES treatment (id)');
         $this->addSql('ALTER TABLE appointment ADD CONSTRAINT FK_FE38F844FB6847F2 FOREIGN KEY (parent_appointment_id) REFERENCES appointment (id)');
         $this->addSql('ALTER TABLE dentist ADD CONSTRAINT FK_6C8FB839D8177B3F FOREIGN KEY (box_id) REFERENCES box (id)');
-        $this->addSql('ALTER TABLE dentist ADD CONSTRAINT FK_6C8FB839471C0366 FOREIGN KEY (treatment_id) REFERENCES treatment (id)');
+        $this->addSql('ALTER TABLE dentist_treatment ADD CONSTRAINT FK_D0AB91111CE0A142 FOREIGN KEY (dentist_id) REFERENCES dentist (id) ON DELETE CASCADE');
+        $this->addSql('ALTER TABLE dentist_treatment ADD CONSTRAINT FK_D0AB9111471C0366 FOREIGN KEY (treatment_id) REFERENCES treatment (id) ON DELETE CASCADE');
         $this->addSql('ALTER TABLE document ADD CONSTRAINT FK_D8698A766B899279 FOREIGN KEY (patient_id) REFERENCES patient (id)');
         $this->addSql('ALTER TABLE odontogram ADD CONSTRAINT FK_251BF9406B899279 FOREIGN KEY (patient_id) REFERENCES patient (id)');
         $this->addSql('ALTER TABLE odontogram ADD CONSTRAINT FK_251BF940E5B533F9 FOREIGN KEY (appointment_id) REFERENCES appointment (id)');
@@ -69,17 +71,30 @@ final class Version20260224145704 extends AbstractMigration
             (5, 'Endodoncia', 'Tratamiento de conductos', 90)
         ");
 
-        $this->addSql("INSERT INTO dentist (id, email, roles, password, first_name, last_name, treatment_id, available_days, phone, updated_at, box_id) VALUES
-            (1, 'ana.garcia@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$4S2gNqEVlx7k9JrLmP5Q.u0W3X6Y9Z2B5C8D1E4F7G0H3K6N9Q', 'Ana', 'Garcia', 1, 'Mon', '600111222', '2026-02-24 09:00:00', NULL),
-            (2, 'luis.martin@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$4S2gNqEVlx7k9JrLmP5Q.u0W3X6Y9Z2B5C8D1E4F7G0H3K6N9Q', 'Luis', 'Martin', 2, 'Tue', '600333444', '2026-02-24 09:05:00', NULL),
-            (3, 'marta.suarez@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$4S2gNqEVlx7k9JrLmP5Q.u0W3X6Y9Z2B5C8D1E4F7G0H3K6N9Q', 'Marta', 'Suarez', 3, 'Wed', '600555666', '2026-02-24 09:10:00', NULL),
-            (4, 'pedro.alvarez@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$4S2gNqEVlx7k9JrLmP5Q.u0W3X6Y9Z2B5C8D1E4F7G0H3K6N9Q', 'Pedro', 'Alvarez', 4, 'Thu', '600777888', '2026-02-24 09:15:00', NULL),
-            (5, 'javier.gomez@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$4S2gNqEVlx7k9JrLmP5Q.u0W3X6Y9Z2B5C8D1E4F7G0H3K6N9Q', 'Javier', 'Gomez', 5, 'Fri', '600999000', '2026-02-24 09:20:00', NULL),
-            (6, 'jorge.martinez@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$4S2gNqEVlx7k9JrLmP5Q.u0W3X6Y9Z2B5C8D1E4F7G0H3K6N9Q', 'Jorge', 'Martinez', 1, 'Mon', '600000111', '2026-02-24 09:25:00', NULL),
-            (7, 'sofia.lopez@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$4S2gNqEVlx7k9JrLmP5Q.u0W3X6Y9Z2B5C8D1E4F7G0H3K6N9Q', 'Sofia', 'Lopez', 2, 'Tue', '600222333', '2026-02-24 09:30:00', NULL),
-            (8, 'carlos.perez@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$4S2gNqEVlx7k9JrLmP5Q.u0W3X6Y9Z2B5C8D1E4F7G0H3K6N9Q', 'Carlos', 'Perez', 3, 'Wed', '600444555', '2026-02-24 09:35:00', NULL),
-            (9, 'laura.martinez@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$4S2gNqEVlx7k9JrLmP5Q.u0W3X6Y9Z2B5C8D1E4F7G0H3K6N9Q', 'Laura', 'Martinez', 4, 'Thu', '600666777', '2026-02-24 09:40:00', NULL),
-            (10, 'pepe.garcia@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$4S2gNqEVlx7k9JrLmP5Q.u0W3X6Y9Z2B5C8D1E4F7G0H3K6N9Q', 'Pepe', 'Garcia', 5, 'Fri', '600888999', '2026-02-24 09:45:00', NULL)
+        $this->addSql("INSERT INTO dentist (id, email, roles, password, first_name, last_name, available_days, phone, updated_at, box_id) VALUES
+            (1, 'ana.garcia@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$4S2gNqEVlx7k9JrLmP5Q.u0W3X6Y9Z2B5C8D1E4F7G0H3K6N9Q', 'Ana', 'Garcia', 'Mon', '600111222', '2026-02-24 09:00:00', NULL),
+            (2, 'luis.martin@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$4S2gNqEVlx7k9JrLmP5Q.u0W3X6Y9Z2B5C8D1E4F7G0H3K6N9Q', 'Luis', 'Martin', 'Tue', '600333444', '2026-02-24 09:05:00', NULL),
+            (3, 'marta.suarez@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$4S2gNqEVlx7k9JrLmP5Q.u0W3X6Y9Z2B5C8D1E4F7G0H3K6N9Q', 'Marta', 'Suarez', 'Wed', '600555666', '2026-02-24 09:10:00', NULL),
+            (4, 'pedro.alvarez@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$4S2gNqEVlx7k9JrLmP5Q.u0W3X6Y9Z2B5C8D1E4F7G0H3K6N9Q', 'Pedro', 'Alvarez', 'Thu', '600777888', '2026-02-24 09:15:00', NULL),
+            (5, 'javier.gomez@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$4S2gNqEVlx7k9JrLmP5Q.u0W3X6Y9Z2B5C8D1E4F7G0H3K6N9Q', 'Javier', 'Gomez', 'Fri', '600999000', '2026-02-24 09:20:00', NULL),
+            (6, 'jorge.martinez@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$4S2gNqEVlx7k9JrLmP5Q.u0W3X6Y9Z2B5C8D1E4F7G0H3K6N9Q', 'Jorge', 'Martinez', 'Mon', '600000111', '2026-02-24 09:25:00', NULL),
+            (7, 'sofia.lopez@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$4S2gNqEVlx7k9JrLmP5Q.u0W3X6Y9Z2B5C8D1E4F7G0H3K6N9Q', 'Sofia', 'Lopez', 'Tue', '600222333', '2026-02-24 09:30:00', NULL),
+            (8, 'carlos.perez@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$4S2gNqEVlx7k9JrLmP5Q.u0W3X6Y9Z2B5C8D1E4F7G0H3K6N9Q', 'Carlos', 'Perez', 'Wed', '600444555', '2026-02-24 09:35:00', NULL),
+            (9, 'laura.martinez@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$4S2gNqEVlx7k9JrLmP5Q.u0W3X6Y9Z2B5C8D1E4F7G0H3K6N9Q', 'Laura', 'Martinez', 'Thu', '600666777', '2026-02-24 09:40:00', NULL),
+            (10, 'pepe.garcia@clinic.local', '[\"ROLE_DENTIST\"]', '\$2y\$13\$4S2gNqEVlx7k9JrLmP5Q.u0W3X6Y9Z2B5C8D1E4F7G0H3K6N9Q', 'Pepe', 'Garcia', 'Fri', '600888999', '2026-02-24 09:45:00', NULL)
+        ");
+
+        $this->addSql("INSERT INTO dentist_treatment (dentist_id, treatment_id) VALUES
+            (1, 1),
+            (2, 2),
+            (3, 3),
+            (4, 4),
+            (5, 5),
+            (6, 1),
+            (7, 2),
+            (8, 3),
+            (9, 4),
+            (10, 5)
         ");
 
         // Insertar todos los dientes permanentes y temporales
@@ -226,6 +241,7 @@ final class Version20260224145704 extends AbstractMigration
         $this->addSql('ALTER TABLE tooth_pathology DROP FOREIGN KEY FK_17639292CE86795D');
         $this->addSql('DROP TABLE appointment');
         $this->addSql('DROP TABLE box');
+        $this->addSql('DROP TABLE dentist_treatment');
         $this->addSql('DROP TABLE dentist');
         $this->addSql('DROP TABLE document');
         $this->addSql('DROP TABLE odontogram');
