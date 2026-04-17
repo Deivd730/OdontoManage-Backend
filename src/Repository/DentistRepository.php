@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Dentist;
+use App\Entity\Treatment;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
@@ -36,5 +37,52 @@ class DentistRepository extends ServiceEntityRepository implements PasswordUpgra
         $user->setPassword($newHashedPassword);
         $this->getEntityManager()->persist($user);
         $this->getEntityManager()->flush();
+    }
+
+    /**
+     * @return Dentist[]
+     */
+    public function findByTreatmentAndWorkingDate(Treatment $treatment, \DateTimeInterface $visitDate): array
+    {
+        $dentists = $this->createQueryBuilder('d')
+            ->innerJoin('d.treatments', 't')
+            ->andWhere('t = :treatment')
+            ->setParameter('treatment', $treatment)
+            ->orderBy('d.lastName', 'ASC')
+            ->addOrderBy('d.firstName', 'ASC')
+            ->getQuery()
+            ->getResult();
+
+        $dayOfWeek = $visitDate->format('D');
+
+        return array_values(array_filter(
+            $dentists,
+            static function (Dentist $dentist) use ($dayOfWeek): bool {
+                $availableDays = $dentist->getAvailableDays();
+
+                if (!$availableDays) {
+                    return true;
+                }
+
+                $availableDaysArray = array_map('trim', explode(',', $availableDays));
+
+                return in_array($dayOfWeek, $availableDaysArray, true);
+            }
+        ));
+    }
+
+    /**
+     * @return Treatment[]
+     */
+    public function findTreatmentsForDentist(Dentist $dentist): array
+    {
+        $treatments = $dentist->getTreatments()->toArray();
+
+        usort(
+            $treatments,
+            static fn (Treatment $a, Treatment $b): int => strcmp((string) $a->getName(), (string) $b->getName())
+        );
+
+        return $treatments;
     }
 }

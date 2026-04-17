@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Dentist;
 use App\Repository\DentistRepository;
+use App\Repository\TreatmentRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -19,6 +20,7 @@ class DentistController extends AbstractController
 {
     public function __construct(
         private DentistRepository $dentistRepository,
+        private TreatmentRepository $treatmentRepository,
         private EntityManagerInterface $entityManager,
         private SerializerInterface $serializer,
         private ValidatorInterface $validator,
@@ -47,12 +49,25 @@ class DentistController extends AbstractController
     public function create(Request $request): JsonResponse
     {
         try {
+            $payload = json_decode($request->getContent(), true, 512, JSON_THROW_ON_ERROR);
+            if (!is_array($payload)) {
+                return new JsonResponse(['error' => 'Invalid JSON payload'], Response::HTTP_BAD_REQUEST);
+            }
+
+            $payloadForSerializer = $payload;
+            unset($payloadForSerializer['treatments'], $payloadForSerializer['treatment']);
+
             $dentist = $this->serializer->deserialize(
-                $request->getContent(),
+                json_encode($payloadForSerializer, JSON_THROW_ON_ERROR),
                 Dentist::class,
                 'json',
                 ['groups' => 'dentist:write']
             );
+
+            $syncError = $this->syncTreatmentsFromPayload($dentist, $payload);
+            if ($syncError !== null) {
+                return $syncError;
+            }
 
             // Ensure dentist always has ROLE_DENTIST
             $dentist->setRoles(['ROLE_DENTIST']);
@@ -73,6 +88,8 @@ class DentistController extends AbstractController
             $data = $this->serializer->serialize($dentist, 'json', ['groups' => 'dentist:read']);
 
             return JsonResponse::fromJsonString($data, Response::HTTP_CREATED);
+        } catch (\JsonException) {
+            return new JsonResponse(['error' => 'Invalid JSON payload'], Response::HTTP_BAD_REQUEST);
         } catch (\Exception $e) {
             return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
         }
@@ -83,12 +100,25 @@ class DentistController extends AbstractController
     public function update(Dentist $dentist, Request $request): JsonResponse
     {
         try {
+            $payload = json_decode($request->getContent(), true, 512, JSON_THROW_ON_ERROR);
+            if (!is_array($payload)) {
+                return new JsonResponse(['error' => 'Invalid JSON payload'], Response::HTTP_BAD_REQUEST);
+            }
+
+            $payloadForSerializer = $payload;
+            unset($payloadForSerializer['treatments'], $payloadForSerializer['treatment']);
+
             $this->serializer->deserialize(
-                $request->getContent(),
+                json_encode($payloadForSerializer, JSON_THROW_ON_ERROR),
                 Dentist::class,
                 'json',
                 ['object_to_populate' => $dentist, 'groups' => 'dentist:write']
             );
+
+            $syncError = $this->syncTreatmentsFromPayload($dentist, $payload);
+            if ($syncError !== null) {
+                return $syncError;
+            }
 
             // Ensure dentist always has ROLE_DENTIST
             $dentist->setRoles(['ROLE_DENTIST']);
@@ -108,6 +138,8 @@ class DentistController extends AbstractController
             $data = $this->serializer->serialize($dentist, 'json', ['groups' => 'dentist:read']);
 
             return JsonResponse::fromJsonString($data);
+        } catch (\JsonException) {
+            return new JsonResponse(['error' => 'Invalid JSON payload'], Response::HTTP_BAD_REQUEST);
         } catch (\Exception $e) {
             return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
         }
@@ -118,12 +150,25 @@ class DentistController extends AbstractController
     public function patch(Dentist $dentist, Request $request): JsonResponse
     {
         try {
+            $payload = json_decode($request->getContent(), true, 512, JSON_THROW_ON_ERROR);
+            if (!is_array($payload)) {
+                return new JsonResponse(['error' => 'Invalid JSON payload'], Response::HTTP_BAD_REQUEST);
+            }
+
+            $payloadForSerializer = $payload;
+            unset($payloadForSerializer['treatments'], $payloadForSerializer['treatment']);
+
             $this->serializer->deserialize(
-                $request->getContent(),
+                json_encode($payloadForSerializer, JSON_THROW_ON_ERROR),
                 Dentist::class,
                 'json',
                 ['object_to_populate' => $dentist, 'groups' => 'dentist:write']
             );
+
+            $syncError = $this->syncTreatmentsFromPayload($dentist, $payload);
+            if ($syncError !== null) {
+                return $syncError;
+            }
 
             // Ensure dentist always has ROLE_DENTIST
             $dentist->setRoles(['ROLE_DENTIST']);
@@ -143,6 +188,8 @@ class DentistController extends AbstractController
             $data = $this->serializer->serialize($dentist, 'json', ['groups' => 'dentist:read']);
 
             return JsonResponse::fromJsonString($data);
+        } catch (\JsonException) {
+            return new JsonResponse(['error' => 'Invalid JSON payload'], Response::HTTP_BAD_REQUEST);
         } catch (\Exception $e) {
             return new JsonResponse(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
         }
@@ -156,5 +203,40 @@ class DentistController extends AbstractController
         $this->entityManager->flush();
 
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+    }
+
+    private function syncTreatmentsFromPayload(Dentist $dentist, array $payload): ?JsonResponse
+    {
+        $hasTreatments = array_key_exists('treatments', $payload);
+        $hasLegacyTreatment = array_key_exists('treatment', $payload);
+
+        if (!$hasTreatments && !$hasLegacyTreatment) {
+            return null;
+        }
+
+        $treatmentIds = $hasTreatments ? $payload['treatments'] : [$payload['treatment']];
+
+        if (!is_array($treatmentIds)) {
+            return new JsonResponse(['error' => 'Treatments must be an array of ids'], Response::HTTP_BAD_REQUEST);
+        }
+
+        foreach ($dentist->getTreatments()->toArray() as $existingTreatment) {
+            $dentist->removeTreatment($existingTreatment);
+        }
+
+        foreach ($treatmentIds as $treatmentId) {
+            if (!is_numeric($treatmentId)) {
+                return new JsonResponse(['error' => 'Each treatment id must be numeric'], Response::HTTP_BAD_REQUEST);
+            }
+
+            $treatment = $this->treatmentRepository->find((int) $treatmentId);
+            if (!$treatment) {
+                return new JsonResponse(['error' => sprintf('Treatment not found: %s', (string) $treatmentId)], Response::HTTP_BAD_REQUEST);
+            }
+
+            $dentist->addTreatment($treatment);
+        }
+
+        return null;
     }
 }

@@ -45,10 +45,13 @@ class Dentist implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups(['dentist:read', 'dentist:write', 'appointment:read'])]
     private ?string $lastName = null;
 
-    #[ORM\ManyToOne(targetEntity: Treatment::class)]
-    #[ORM\JoinColumn(nullable: true)]
+    /**
+     * @var Collection<int, Treatment>
+     */
+    #[ORM\ManyToMany(targetEntity: Treatment::class, inversedBy: 'dentists')]
+    #[ORM\JoinTable(name: 'dentist_treatment')]
     #[Groups(['dentist:read', 'dentist:write', 'appointment:read'])]
-    private ?Treatment $treatment = null;
+    private Collection $treatments;
 
     #[ORM\Column(length: 255, nullable: true)]
     #[Groups(['dentist:read', 'dentist:write', 'appointment:read'])]
@@ -73,6 +76,7 @@ class Dentist implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function __construct()
     {
+        $this->treatments = new ArrayCollection();
         $this->patients = new ArrayCollection();
         $this->appointments = new ArrayCollection();
     }
@@ -178,14 +182,29 @@ class Dentist implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getTreatment(): ?Treatment
+    /**
+     * @return Collection<int, Treatment>
+     */
+    public function getTreatments(): Collection
     {
-        return $this->treatment;
+        return $this->treatments;
     }
 
-    public function setTreatment(?Treatment $treatment): static
+    public function addTreatment(Treatment $treatment): static
     {
-        $this->treatment = $treatment;
+        if (!$this->treatments->contains($treatment)) {
+            $this->treatments->add($treatment);
+            $treatment->addDentist($this);
+        }
+
+        return $this;
+    }
+
+    public function removeTreatment(Treatment $treatment): static
+    {
+        if ($this->treatments->removeElement($treatment)) {
+            $treatment->removeDentist($this);
+        }
 
         return $this;
     }

@@ -52,6 +52,45 @@ class AppointmentController extends AbstractController
         return JsonResponse::fromJsonString($data);
     }
 
+    #[Route('/treatment/{treatmentId}/available-dentists', methods: ['GET'])]
+    public function getAvailableDentistsByTreatment(int $treatmentId, Request $request): JsonResponse
+    {
+        $visitDateInput = $request->query->get('visitDate');
+        if (!$visitDateInput) {
+            return new JsonResponse(['error' => 'visitDate query parameter is required'], Response::HTTP_BAD_REQUEST);
+        }
+
+        try {
+            $visitDate = new \DateTime($visitDateInput);
+        } catch (\Exception) {
+            return new JsonResponse(['error' => 'Invalid visitDate format'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $treatment = $this->treatmentRepository->find($treatmentId);
+        if (!$treatment) {
+            return new JsonResponse(['error' => 'Treatment not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $dentists = $this->dentistRepository->findByTreatmentAndWorkingDate($treatment, $visitDate);
+        $data = $this->serializer->serialize($dentists, 'json', ['groups' => 'dentist:read']);
+
+        return JsonResponse::fromJsonString($data);
+    }
+
+    #[Route('/dentist/{dentistId}/available-treatments', methods: ['GET'])]
+    public function getAvailableTreatmentsByDentist(int $dentistId): JsonResponse
+    {
+        $dentist = $this->dentistRepository->find($dentistId);
+        if (!$dentist) {
+            return new JsonResponse(['error' => 'Dentist not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $treatments = $this->dentistRepository->findTreatmentsForDentist($dentist);
+        $data = $this->serializer->serialize($treatments, 'json', ['groups' => 'treatment:read']);
+
+        return JsonResponse::fromJsonString($data);
+    }
+
     #[Route('/{id}', methods: ['GET'])]
     public function show(Appointment $appointment): JsonResponse
     {
@@ -129,6 +168,10 @@ class AppointmentController extends AbstractController
             }
             if (!$treatment) {
                 return new JsonResponse(['error' => 'Treatment not found'], Response::HTTP_BAD_REQUEST);
+            }
+
+            if (!$dentist->getTreatments()->contains($treatment)) {
+                return new JsonResponse(['error' => 'Selected dentist is not specialized for this treatment'], Response::HTTP_BAD_REQUEST);
             }
 
             if (!isset($data['visitDate'])) {
@@ -267,6 +310,12 @@ class AppointmentController extends AbstractController
                     return new JsonResponse(['error' => 'Treatment not found'], Response::HTTP_BAD_REQUEST);
                 }
                 $appointment->setTreatment($treatment);
+            }
+
+            $dentist = $appointment->getDentist();
+            $treatment = $appointment->getTreatment();
+            if ($dentist && $treatment && !$dentist->getTreatments()->contains($treatment)) {
+                return new JsonResponse(['error' => 'Selected dentist is not specialized for this treatment'], Response::HTTP_BAD_REQUEST);
             }
             
             if (isset($data['visitDate'])) {
