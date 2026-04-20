@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\AppointmentRepository;
 use App\Validator\DentistAvailableDay;
+use App\Validator\PatientHasInfectiousDisease;
 use App\Validator\UniqueBoxTimeSlot;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -14,6 +15,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
 #[ORM\Entity(repositoryClass: AppointmentRepository::class)]
 #[UniqueBoxTimeSlot]
 #[DentistAvailableDay]
+#[PatientHasInfectiousDisease]
 class Appointment
 {
     #[ORM\Id]
