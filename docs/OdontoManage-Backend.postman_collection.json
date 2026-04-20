@@ -32,11 +32,15 @@
     },
     {
       "key": "visitDate",
-      "value": "2026-04-20T10:00:00"
+      "value": "2026-04-20T11:00:00"
     },
     {
       "key": "patientId",
       "value": "1"
+    },
+    {
+      "key": "infectiousPatientId",
+      "value": "2"
     },
     {
       "key": "appointmentId",
@@ -45,6 +49,10 @@
     {
       "key": "boxId",
       "value": "1"
+    },
+    {
+      "key": "lastSlotVisitDate",
+      "value": "2026-04-20T16:15:00"
     }
   ],
   "item": [
@@ -233,6 +241,36 @@
           }
         },
         {
+          "name": "Create appointment - infectious patient",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/appointments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "appointments"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patient\": {{infectiousPatientId}},\n  \"dentist\": {{dentistId}},\n  \"treatment\": {{treatmentId}},\n  \"visitDate\": \"{{lastSlotVisitDate}}\",\n  \"consultationReason\": \"Paciente con enfermedad infecciosa\"\n}"
+            }
+          }
+        },
+        {
           "name": "Show appointment",
           "request": {
             "method": "GET",
@@ -252,6 +290,37 @@
                 "appointments",
                 "{{appointmentId}}"
               ]
+            }
+          }
+        },
+        {
+          "name": "Update appointment",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/appointments/{{appointmentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "appointments",
+                "{{appointmentId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patient\": {{patientId}},\n  \"dentist\": {{dentistId}},\n  \"treatment\": {{treatmentId}},\n  \"visitDate\": \"{{visitDate}}\",\n  \"consultationReason\": \"Revision actualizada\"\n}"
             }
           }
         },

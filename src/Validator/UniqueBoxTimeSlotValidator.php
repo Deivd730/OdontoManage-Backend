@@ -4,6 +4,7 @@ namespace App\Validator;
 
 use App\Entity\Appointment;
 use App\Repository\AppointmentRepository;
+use App\Service\Scheduling\ClinicSchedulePolicy;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
 use Symfony\Component\Validator\Exception\UnexpectedTypeException;
@@ -11,7 +12,8 @@ use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 class UniqueBoxTimeSlotValidator extends ConstraintValidator
 {
     public function __construct(
-        private AppointmentRepository $appointmentRepository
+        private AppointmentRepository $appointmentRepository,
+        private ClinicSchedulePolicy $clinicSchedulePolicy,
     ) {
     }
 
@@ -39,8 +41,7 @@ class UniqueBoxTimeSlotValidator extends ConstraintValidator
             return; // Cannot validate without duration
         }
 
-        // Buffer minutes required after each appointment
-        $bufferMinutes = 5;
+        $bufferMinutes = $this->clinicSchedulePolicy->getBufferMinutes();
 
         // Start and end times for this appointment
         $startTime = \DateTime::createFromInterface($visitDate);
@@ -48,9 +49,8 @@ class UniqueBoxTimeSlotValidator extends ConstraintValidator
         $endTime->modify('+' . $durationMinutes . ' minutes');
         $endWithBuffer = (clone $endTime)->modify('+' . $bufferMinutes . ' minutes');
 
-        // Enforce clinic working hours: 09:00 - 17:00 (appointment end + buffer must be <= 17:00)
-        $dayStart = (clone $startTime)->setTime(9, 0, 0);
-        $dayEndAllowed = (clone $startTime)->setTime(17, 0, 0);
+        $dayStart = $this->clinicSchedulePolicy->getWorkingDayStartFor($startTime);
+        $dayEndAllowed = $this->clinicSchedulePolicy->getWorkingDayEndFor($startTime);
 
         if ($startTime < $dayStart || $endWithBuffer > $dayEndAllowed) {
             $this->context->buildViolation('Appointments must be scheduled between 09:00 and 17:00 and include a 5-minute buffer after the appointment.')

@@ -8,6 +8,7 @@ use App\Repository\BoxRepository;
 use App\Repository\DentistRepository;
 use App\Repository\PatientRepository;
 use App\Repository\TreatmentRepository;
+use App\Service\Scheduling\ClinicSchedulePolicy;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -26,6 +27,7 @@ class AppointmentController extends AbstractController
         private PatientRepository $patientRepository,
         private DentistRepository $dentistRepository,
         private BoxRepository $boxRepository,
+        private ClinicSchedulePolicy $clinicSchedulePolicy,
         private EntityManagerInterface $entityManager,
         private SerializerInterface $serializer,
         private ValidatorInterface $validator,
@@ -221,10 +223,15 @@ class AppointmentController extends AbstractController
     /**
      * Find an available box for the given date/time and treatment duration
      */
-    private function findAvailableBox(\DateTime $visitDate, \App\Entity\Treatment $treatment): ?\App\Entity\Box
+    private function findAvailableBox(\DateTime $visitDate, \App\Entity\Treatment $treatment, ?int $appointmentIdToIgnore = null): ?\App\Entity\Box
     {
         $durationMinutes = $treatment->getDurationMinutes();
-        $bufferMinutes = 5;
+
+        if (!$this->clinicSchedulePolicy->isWithinWorkingWindow($visitDate, $durationMinutes)) {
+            return null;
+        }
+
+        $bufferMinutes = $this->clinicSchedulePolicy->getBufferMinutes();
 
         // Get all boxes and check which one is available
         $boxes = $this->boxRepository->findAll();
@@ -253,6 +260,10 @@ class AppointmentController extends AbstractController
             $hasConflict = false;
 
             foreach ($appointments as $other) {
+                if ($appointmentIdToIgnore !== null && $other->getId() === $appointmentIdToIgnore) {
+                    continue;
+                }
+
                 $otherTreatment = $other->getTreatment();
                 if (!$otherTreatment) {
                     continue;
@@ -324,7 +335,7 @@ class AppointmentController extends AbstractController
                 // Re-assign box when date changes
                 $treatment = $appointment->getTreatment();
                 if ($treatment) {
-                    $box = $this->findAvailableBox($appointment->getVisitDate(), $treatment);
+                    $box = $this->findAvailableBox($appointment->getVisitDate(), $treatment, $appointment->getId());
                     if (!$box) {
                         return new JsonResponse(['error' => 'No available boxes for the requested time slot'], Response::HTTP_CONFLICT);
                     }
