@@ -4,11 +4,15 @@ namespace App\Controller;
 
 use App\Entity\Pathology;
 use App\Entity\Odontogram;
+use App\Entity\ToothTreatment;
+use App\Entity\BridgeTreatment;
 use App\Repository\AppointmentRepository;
 use App\Repository\OdontogramRepository;
 use App\Repository\PathologyRepository;
 use App\Repository\PatientRepository;
 use App\Repository\ToothRepository;
+use App\Repository\TreatmentRepository;
+use App\Repository\BridgeTreatmentRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -27,6 +31,8 @@ class OdontogramController extends AbstractController
         private AppointmentRepository $appointmentRepository,
         private ToothRepository $toothRepository,
         private PathologyRepository $pathologyRepository,
+        private TreatmentRepository $treatmentRepository,
+        private BridgeTreatmentRepository $bridgeTreatmentRepository,
         private EntityManagerInterface $entityManager,
         private SerializerInterface $serializer,
         private ValidatorInterface $validator,
@@ -120,6 +126,42 @@ class OdontogramController extends AbstractController
                 }
             }
 
+            if (isset($data['toothTreatments']) && is_array($data['toothTreatments'])) {
+                foreach ($data['toothTreatments'] as $ttData) {
+                    $toothTreatment = new ToothTreatment();
+
+                    $treatment = $this->treatmentRepository->find($ttData['treatment']['id'] ?? $ttData['treatment'] ?? null);
+                    if (!$treatment) {
+                        $treatmentId = $ttData['treatment']['id'] ?? $ttData['treatment'] ?? null;
+                        return new JsonResponse(['error' => "El tratamiento ID $treatmentId no existe"], 400);
+                    }
+
+                    $toothTreatment->setTreatment($treatment);
+                    $toothTreatment->setToothNumber($ttData['toothNumber'] ?? null);
+                    $toothTreatment->setToothFace($ttData['toothFace'] ?? 0);
+                    $toothTreatment->setStatus($ttData['status'] ?? ToothTreatment::STATUS_PENDING);
+                    $odontogram->addToothTreatment($toothTreatment);
+                }
+            }
+
+            if (isset($data['bridgeTreatments']) && is_array($data['bridgeTreatments'])) {
+                foreach ($data['bridgeTreatments'] as $btData) {
+                    $bridgeTreatment = new BridgeTreatment();
+
+                    $treatment = $this->treatmentRepository->find($btData['treatment']['id'] ?? $btData['treatment'] ?? null);
+                    if (!$treatment) {
+                        $treatmentId = $btData['treatment']['id'] ?? $btData['treatment'] ?? null;
+                        return new JsonResponse(['error' => "El tratamiento ID $treatmentId no existe"], 400);
+                    }
+
+                    $bridgeTreatment->setTreatment($treatment);
+                    $bridgeTreatment->setStartTooth($btData['startTooth'] ?? null);
+                    $bridgeTreatment->setEndTooth($btData['endTooth'] ?? null);
+                    $bridgeTreatment->setStatus($btData['status'] ?? BridgeTreatment::STATUS_PENDING);
+                    $odontogram->addBridgeTreatment($bridgeTreatment);
+                }
+            }
+
         $this->entityManager->persist($odontogram);
         $this->entityManager->flush();
 
@@ -142,7 +184,17 @@ class OdontogramController extends AbstractController
             foreach ($odontogram->getToothPathologies()->toArray() as $existingTp) {
                 $odontogram->removeToothPathology($existingTp);
                 $this->entityManager->remove($existingTp);      
-            }            
+            }
+
+            foreach ($odontogram->getToothTreatments()->toArray() as $existingTt) {
+                $odontogram->removeToothTreatment($existingTt);
+                $this->entityManager->remove($existingTt);      
+            }
+
+            foreach ($odontogram->getBridgeTreatments()->toArray() as $existingBt) {
+                $odontogram->removeBridgeTreatment($existingBt);
+                $this->entityManager->remove($existingBt);      
+            }                 
                         
             if (isset($data['toothPathologies']) && is_array($data['toothPathologies'])) {
                 foreach ($data['toothPathologies'] as $tpData) {
@@ -166,6 +218,42 @@ class OdontogramController extends AbstractController
                     $toothPathology->setPathology($pathology);
                     $toothPathology->setToothFace($tpData['toothFace'] ?? 0);                    
                     $odontogram->addToothPathology($toothPathology);
+                }
+            }
+
+            if (isset($data['toothTreatments']) && is_array($data['toothTreatments'])) {
+                foreach ($data['toothTreatments'] as $ttData) {
+                    $toothTreatment = new ToothTreatment();
+
+                    $treatment = $this->treatmentRepository->find($ttData['treatment']['id'] ?? $ttData['treatment'] ?? null);
+                    if (!$treatment) {
+                        $treatmentId = $ttData['treatment']['id'] ?? $ttData['treatment'] ?? null;
+                        return new JsonResponse(['error' => "El tratamiento ID $treatmentId no existe"], 400);
+                    }
+
+                    $toothTreatment->setTreatment($treatment);
+                    $toothTreatment->setToothNumber($ttData['toothNumber'] ?? null);
+                    $toothTreatment->setToothFace($ttData['toothFace'] ?? 0);
+                    $toothTreatment->setStatus($ttData['status'] ?? ToothTreatment::STATUS_PENDING);
+                    $odontogram->addToothTreatment($toothTreatment);
+                }
+            }
+
+            if (isset($data['bridgeTreatments']) && is_array($data['bridgeTreatments'])) {
+                foreach ($data['bridgeTreatments'] as $btData) {
+                    $bridgeTreatment = new BridgeTreatment();
+
+                    $treatment = $this->treatmentRepository->find($btData['treatment']['id'] ?? $btData['treatment'] ?? null);
+                    if (!$treatment) {
+                        $treatmentId = $btData['treatment']['id'] ?? $btData['treatment'] ?? null;
+                        return new JsonResponse(['error' => "El tratamiento ID $treatmentId no existe"], 400);
+                    }
+
+                    $bridgeTreatment->setTreatment($treatment);
+                    $bridgeTreatment->setStartTooth($btData['startTooth'] ?? null);
+                    $bridgeTreatment->setEndTooth($btData['endTooth'] ?? null);
+                    $bridgeTreatment->setStatus($btData['status'] ?? BridgeTreatment::STATUS_PENDING);
+                    $odontogram->addBridgeTreatment($bridgeTreatment);
                 }
             }
             

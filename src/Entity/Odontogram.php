@@ -35,6 +35,14 @@ class Odontogram
     #[Groups(['odontogram:read', 'odontogram:write'])]
     private Collection $toothPathologies;
 
+    #[ORM\OneToMany(mappedBy: 'odontogram', targetEntity: ToothTreatment::class, cascade: ['persist', 'remove'])]
+    #[Groups(['odontogram:read', 'odontogram:write'])]
+    private Collection $toothTreatments;
+
+    #[ORM\OneToMany(mappedBy: 'odontogram', targetEntity: BridgeTreatment::class, cascade: ['persist', 'remove'])]
+    #[Groups(['odontogram:read', 'odontogram:write'])]
+    private Collection $bridgeTreatments;
+
     #[ORM\Column(length: 20)]
     #[Assert\Choice(choices: [self::TYPE_ADULT, self::TYPE_CHILD], message: 'Invalid odontogram type.')]
     #[Groups(['odontogram:read'])]
@@ -43,6 +51,8 @@ class Odontogram
     public function __construct()
     {
         $this->toothPathologies = new ArrayCollection();
+        $this->toothTreatments = new ArrayCollection();
+        $this->bridgeTreatments = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -103,6 +113,35 @@ class Odontogram
         return $this;
     }
 
+    /**
+     * @return Collection<int, ToothTreatment>
+     */
+    public function getToothTreatments(): Collection
+    {
+        return $this->toothTreatments;
+    }
+
+    public function addToothTreatment(ToothTreatment $toothTreatment): static
+    {
+        if (!$this->toothTreatments->contains($toothTreatment)) {
+            $this->toothTreatments->add($toothTreatment);
+            $toothTreatment->setOdontogram($this);
+        }
+
+        return $this;
+    }
+
+    public function removeToothTreatment(ToothTreatment $toothTreatment): static
+    {
+        if ($this->toothTreatments->removeElement($toothTreatment)) {
+            if ($toothTreatment->getOdontogram() === $this) {
+                $toothTreatment->setOdontogram(null);
+            }
+        }
+
+        return $this;
+    }
+
     public function getType(): string
     {
         return $this->type;
@@ -111,6 +150,35 @@ class Odontogram
     public function setType(string $type): static
     {
         $this->type = $type;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, BridgeTreatment>
+     */
+    public function getBridgeTreatments(): Collection
+    {
+        return $this->bridgeTreatments;
+    }
+
+    public function addBridgeTreatment(BridgeTreatment $bridgeTreatment): static
+    {
+        if (!$this->bridgeTreatments->contains($bridgeTreatment)) {
+            $this->bridgeTreatments->add($bridgeTreatment);
+            $bridgeTreatment->setOdontogram($this);
+        }
+
+        return $this;
+    }
+
+    public function removeBridgeTreatment(BridgeTreatment $bridgeTreatment): static
+    {
+        if ($this->bridgeTreatments->removeElement($bridgeTreatment)) {
+            if ($bridgeTreatment->getOdontogram() === $this) {
+                $bridgeTreatment->setOdontogram(null);
+            }
+        }
 
         return $this;
     }
