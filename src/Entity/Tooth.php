@@ -14,7 +14,7 @@ class Tooth
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['tooth:read', 'odontogram:read'])]
+    #[Groups(['tooth:read', 'tooth:write', 'odontogram:read', 'odontogram:write'])]
     private ?int $id = null;
 
     #[ORM\Column]

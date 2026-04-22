@@ -21,7 +21,7 @@ class Appointment
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['appointment:read', 'odontogram:read'])]
+    #[Groups(['appointment:read', 'appointment:write', 'odontogram:read', 'odontogram:write'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(targetEntity: Patient::class)]

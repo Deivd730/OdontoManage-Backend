@@ -14,6 +14,7 @@ use App\Repository\ToothRepository;
 use App\Repository\TreatmentRepository;
 use App\Repository\BridgeTreatmentRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -36,6 +37,7 @@ class OdontogramController extends AbstractController
         private EntityManagerInterface $entityManager,
         private SerializerInterface $serializer,
         private ValidatorInterface $validator,
+        private LoggerInterface $logger,
     ) {
     }
 
@@ -177,33 +179,45 @@ class OdontogramController extends AbstractController
     {
         try {
             $data = json_decode($request->getContent(), true);
+            
             if (!$data) {
+                $this->logger->error('JSON inválido recibido');
                 return new JsonResponse(['error' => 'JSON inválido'], Response::HTTP_BAD_REQUEST);
             }
             
-            foreach ($odontogram->getToothPathologies()->toArray() as $existingTp) {
+            // Eliminar patologías existentes
+            $existingPathologies = $odontogram->getToothPathologies()->toArray();
+            foreach ($existingPathologies as $existingTp) {
                 $odontogram->removeToothPathology($existingTp);
                 $this->entityManager->remove($existingTp);      
             }
 
-            foreach ($odontogram->getToothTreatments()->toArray() as $existingTt) {
+            // Eliminar tratamientos por diente existentes
+            $existingTreatments = $odontogram->getToothTreatments()->toArray();
+            foreach ($existingTreatments as $existingTt) {
                 $odontogram->removeToothTreatment($existingTt);
                 $this->entityManager->remove($existingTt);      
             }
 
-            foreach ($odontogram->getBridgeTreatments()->toArray() as $existingBt) {
+            // Eliminar tratamientos por puente existentes
+            $existingBridges = $odontogram->getBridgeTreatments()->toArray();
+            foreach ($existingBridges as $existingBt) {
                 $odontogram->removeBridgeTreatment($existingBt);
                 $this->entityManager->remove($existingBt);      
-            }                 
+            }
+            
+            // Flush para limpiar la BD ANTES de insertar
+            $this->entityManager->flush();
                         
             if (isset($data['toothPathologies']) && is_array($data['toothPathologies'])) {
-                foreach ($data['toothPathologies'] as $tpData) {
+                foreach ($data['toothPathologies'] as $index => $tpData) {
                     $toothPathology = new \App\Entity\ToothPathology();
                     
                     $toothNumber = $tpData['tooth']['toothNumber'] ?? null;
                     $tooth = $this->toothRepository->findOneBy(['toothNumber' => $toothNumber]);
                     
                     if (!$tooth) {
+                        $this->logger->error("Diente no encontrado", ['toothNumber' => $toothNumber]);
                         return new JsonResponse(['error' => "El diente número $toothNumber no existe en la base de datos"], 400);
                     }
                     
@@ -211,6 +225,7 @@ class OdontogramController extends AbstractController
                     
                     if (!$pathology) {
                         $pathologyId = $tpData['pathology']['id'] ?? ($tpData['pathologyId'] ?? null);
+                        $this->logger->error("Patología no encontrada", ['pathologyId' => $pathologyId]);
                         return new JsonResponse(['error' => "La patología ID $pathologyId no existe"], 400);
                     }
 
@@ -222,12 +237,26 @@ class OdontogramController extends AbstractController
             }
 
             if (isset($data['toothTreatments']) && is_array($data['toothTreatments'])) {
-                foreach ($data['toothTreatments'] as $ttData) {
+                foreach ($data['toothTreatments'] as $index => $ttData) {
                     $toothTreatment = new ToothTreatment();
 
-                    $treatment = $this->treatmentRepository->find($ttData['treatment']['id'] ?? $ttData['treatment'] ?? null);
+                    // Validar que treatment no sea un array vacío
+                    $treatmentData = $ttData['treatment'] ?? null;
+                    if (is_array($treatmentData) && empty($treatmentData)) {
+                        $this->logger->error("Tooth Treatment con tratamiento vacío");
+                        return new JsonResponse(['error' => "El tratamiento en diente es requerido (no puede estar vacío)"], 400);
+                    }
+
+                    $treatmentId = is_array($treatmentData) ? ($treatmentData['id'] ?? null) : $treatmentData;
+                    
+                    if (!$treatmentId) {
+                        $this->logger->error("Treatment ID no proporcionado en tooth treatment");
+                        return new JsonResponse(['error' => "El ID del tratamiento es requerido"], 400);
+                    }
+
+                    $treatment = $this->treatmentRepository->find($treatmentId);
                     if (!$treatment) {
-                        $treatmentId = $ttData['treatment']['id'] ?? $ttData['treatment'] ?? null;
+                        $this->logger->error("Tratamiento no encontrado", ['treatmentId' => $treatmentId]);
                         return new JsonResponse(['error' => "El tratamiento ID $treatmentId no existe"], 400);
                     }
 
@@ -240,12 +269,26 @@ class OdontogramController extends AbstractController
             }
 
             if (isset($data['bridgeTreatments']) && is_array($data['bridgeTreatments'])) {
-                foreach ($data['bridgeTreatments'] as $btData) {
+                foreach ($data['bridgeTreatments'] as $index => $btData) {
                     $bridgeTreatment = new BridgeTreatment();
 
-                    $treatment = $this->treatmentRepository->find($btData['treatment']['id'] ?? $btData['treatment'] ?? null);
+                    // Validar que treatment no sea un array vacío
+                    $treatmentData = $btData['treatment'] ?? null;
+                    if (is_array($treatmentData) && empty($treatmentData)) {
+                        $this->logger->error("Bridge Treatment con tratamiento vacío");
+                        return new JsonResponse(['error' => "El tratamiento en bridge es requerido (no puede estar vacío)"], 400);
+                    }
+
+                    $treatmentId = is_array($treatmentData) ? ($treatmentData['id'] ?? null) : $treatmentData;
+                    
+                    if (!$treatmentId) {
+                        $this->logger->error("Treatment ID no proporcionado en bridge treatment");
+                        return new JsonResponse(['error' => "El ID del tratamiento es requerido"], 400);
+                    }
+
+                    $treatment = $this->treatmentRepository->find($treatmentId);
                     if (!$treatment) {
-                        $treatmentId = $btData['treatment']['id'] ?? $btData['treatment'] ?? null;
+                        $this->logger->error("Tratamiento bridge no encontrado", ['treatmentId' => $treatmentId]);
                         return new JsonResponse(['error' => "El tratamiento ID $treatmentId no existe"], 400);
                     }
 
@@ -262,8 +305,13 @@ class OdontogramController extends AbstractController
             $json = $this->serializer->serialize($odontogram, 'json', ['groups' => 'odontogram:read']);
             return JsonResponse::fromJsonString($json);
 
-        } catch (\Exception $e) {            
-            return new JsonResponse(['error' => 'Excepción: ' . $e->getMessage()], Response::HTTP_BAD_REQUEST);
+        } catch (\Exception $e) {
+            $this->logger->error('Excepción en UPDATE ODONTOGRAMA', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+            return new JsonResponse(['error' => 'Error: ' . $e->getMessage()], Response::HTTP_BAD_REQUEST);
         }
     }
 

@@ -15,7 +15,7 @@ class Pathology
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['pathology:read', 'odontogram:read'])]
+    #[Groups(['pathology:read', 'pathology:write', 'odontogram:read', 'odontogram:write'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]

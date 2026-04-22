@@ -15,7 +15,7 @@ class Treatment
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['treatment:read', 'appointment:read', 'dentist:read'])]
+    #[Groups(['treatment:read', 'treatment:write', 'appointment:read', 'odontogram:read', 'odontogram:write', 'dentist:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]

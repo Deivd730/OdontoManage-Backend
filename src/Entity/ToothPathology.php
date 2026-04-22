@@ -12,7 +12,7 @@ class ToothPathology
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['odontogram:read'])]
+    #[Groups(['odontogram:read', 'odontogram:write'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(targetEntity: Odontogram::class, inversedBy: 'toothPathologies')]
