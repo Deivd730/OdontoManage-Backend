@@ -1,166 +1,240 @@
 # OdontoManage Backend
 
-Symfony API backend for the **OdontoManage** project.
+API REST backend for the **OdontoManage** dental management system. Built with **Symfony 7.4**, **API Platform**, and **MySQL 8.0+**.
+
+---
+
+## 🏗️ Tech Stack
+
+- **Framework**: Symfony 7.4.*
+- **API**: API Platform 4.2 (REST/JSON-LD)
+- **Database**: MySQL 8.0+ (or MariaDB 10.11+)
+- **Authentication**: JWT (Lexik JWT Authentication Bundle 3.2)
+- **ORM**: Doctrine ORM 3.6
+- **PHP**: 8.2+
+- **File Upload**: Vich Uploader Bundle 2.9
+- **CORS**: Nelmio CORS Bundle 2.6
 
 ---
 
 ## 📋 Prerequisites
 
-Before starting, make sure you have:
+Make sure you have installed:
 
-- PHP **8.2 or newer**
-- Composer 2
-- MySQL 8+ (or MariaDB equivalent)
-- Symfony CLI (optional but recommended)
+- **PHP 8.2+** with extensions:
+  - `openssl` (JWT support)
+  - `sodium` (encryption)
+  - `pdo_mysql` (MySQL)
+  - `ctype` and `iconv`
+- **Composer 2** (dependency manager)
+- **MySQL 8.0+** or **MariaDB 10.11+** (database)
+- **Symfony CLI** (optional but recommended)
+
+### ✅ Verify PHP Extensions
+
+```bash
+php -m | grep -E "openssl|sodium|pdo_mysql"
+```
 
 ---
 
-## 🔐 Required PHP Extensions (IMPORTANT)
+## 🚀 Installation & Setup
 
-This project uses JWT authentication.
-
-Make sure the following PHP extensions are enabled:
-
-- `openssl`
-- `sodium`
-
-Check with:
+### 1. Clone Repository & Install Dependencies
 
 ```bash
-php -m
-
-
-You must see:
-
-openssl
-sodium
-
-⚠️ Windows (XAMPP) Users Only
-
-If you are using XAMPP on Windows:
-
-Open:
-
-C:\xampp\php\php.ini
-
-
-Enable these lines (remove ; if present):
-
-extension=openssl
-extension=sodium
-
-
-Restart Apache from the XAMPP Control Panel.
-
-Verify again:
-
-php -m
-
-🚀 1. Clone and Install Dependencies
 git clone <your-repo-url>
 cd OdontoManage-Backend
 composer install
+```
 
-🔐 2. Generate JWT Keys (MANDATORY)
+### 2. Generate JWT Keys (MANDATORY)
 
-Each developer must generate their own JWT keys locally.
+```bash
+mkdir -p config/jwt
 
-Create the folder:
-
-mkdir config/jwt
-
-🖥 Windows (XAMPP)
-C:\xampp\apache\bin\openssl.exe genrsa -out config/jwt/private.pem 4096
-C:\xampp\apache\bin\openssl.exe rsa -pubout -in config/jwt/private.pem -out config/jwt/public.pem
-
-🍎 Mac / Linux
+# macOS/Linux
 openssl genrsa -out config/jwt/private.pem 4096
 openssl rsa -pubout -in config/jwt/private.pem -out config/jwt/public.pem
 
+# Windows (PowerShell with OpenSSL installed)
+openssl genrsa -out config/jwt/private.pem 4096
+openssl rsa -pubout -in config/jwt/private.pem -out config/jwt/public.pem
+```
 
-⚠️ Do NOT add a passphrase (development only).
+⚠️ **Do NOT add a passphrase** (development only). Press Enter when prompted.
 
-⚙️ 3. Configure Environment Variables
+### 3. Configure Environment Variables
 
-Copy .env to .env.local:
-
-Mac / Linux
+```bash
+# Create local environment file
 cp .env .env.local
+```
 
-PowerShell (Windows)
-Copy-Item .env .env.local
+Edit `.env.local` and set your database URL:
 
-Edit .env.local
+```env
+# MySQL 8.0+
+DATABASE_URL="mysql://app:password@127.0.0.1:3306/odontomanage?serverVersion=8.0.32&charset=utf8mb4"
 
-Set your database connection:
+# Or MariaDB 10.11+
+# DATABASE_URL="mysql://app:password@127.0.0.1:3306/odontomanage?serverVersion=10.11.2-MariaDB&charset=utf8mb4"
+```
 
-DATABASE_URL="mysql://DB_USER:DB_PASSWORD@127.0.0.1:3306/DB_NAME?serverVersion=8.0.32&charset=utf8mb4"
+Replace `app` (user), `password`, and `odontomanage` (database name) with your actual credentials.
 
+**JWT configuration is already set in `.env` — do NOT modify it.**
 
-Replace:
+### 4. Create Database & Run Migrations
 
-DB_USER
-
-DB_PASSWORD
-
-DB_NAME
-
-⚠️ JWT variables are already configured in .env.
-Do NOT modify them.
-
-🗄 4. Create Database and Run Migrations
+```bash
 php bin/console doctrine:database:create
 php bin/console doctrine:migrations:migrate
+```
 
-▶ 5. Run the Project
-With Symfony CLI (recommended)
+### 5. Start the Server
+
+#### Using Symfony CLI (Recommended)
+```bash
 symfony server:start
+```
 
-Without Symfony CLI
+#### Using PHP Built-in Server
+```bash
 php -S 127.0.0.1:8000 -t public
+```
 
-
-The backend will be available at:
-
-http://127.0.0.1:8000
-
-🧪 Run Tests
-php bin/phpunit
-
-📌 Important Notes
-
-/config/jwt/*.pem is ignored by Git.
-
-Each developer must generate their own keys.
-
-Never commit .pem files.
-
-.env is shared and committed.
-
-.env.local is personal and not committed.
-
-Do NOT store production secrets in committed files.
-
-🔎 Useful Commands
-php bin/console cache:clear
-php bin/console debug:router
-php bin/console doctrine:migrations:status
-
-✅ Setup Checklist
-
-If everything is correct:
-
-composer install runs without errors
-
-openssl and sodium are enabled
-
-JWT keys exist in config/jwt
-
-Database is created successfully
-
-Server starts without errors
-
-You are ready to start development.
-
+**API available at**: `http://localhost:8000`
 
 ---
+
+## 📁 Project Structure
+
+```
+src/
+├── Command/           # CLI commands
+├── Constants/         # Application constants
+├── Controller/        # API endpoints
+├── DataFixtures/      # Test data
+├── Entity/           # Doctrine entities (models)
+├── EventListener/    # Symfony event handlers
+├── Repository/       # Doctrine repositories (data access)
+├── Serializer/       # JSON serialization/deserialization
+├── Service/          # Business logic services
+└── Validator/        # Custom validation rules
+
+config/
+├── jwt/              # JWT keys (private.pem, public.pem)
+├── packages/         # Bundle configurations
+└── routes/           # API routing definitions
+
+migrations/           # Database migrations
+```
+
+---
+
+## 🔑 Bundles & Features
+
+| Bundle | Purpose |
+|--------|---------|
+| **API Platform** | REST API generation from entities |
+| **Doctrine ORM** | Database abstraction & ORM |
+| **JWT Auth** | Token-based authentication |
+| **Vich Uploader** | File/image upload management |
+| **CORS** | Cross-Origin Resource Sharing |
+| **Messenger** | Asynchronous message handling |
+
+---
+
+## 🛠️ Useful Commands
+
+```bash
+# Clear cache
+php bin/console cache:clear
+
+# View all routes
+php bin/console debug:router
+
+# Check migrations status
+php bin/console doctrine:migrations:status
+
+# Create new migration
+php bin/console make:migration
+
+# Generate new entity
+php bin/console make:entity
+
+# Install dependencies
+composer install
+
+# Update dependencies
+composer update
+```
+
+---
+
+## ⚠️ Important Notes
+
+| File/Folder | Status | Action |
+|------------|--------|--------|
+| `/config/jwt/*.pem` | ❌ Ignored by Git | Each developer generates locally |
+| `.env` | ✅ Committed | Shared configuration defaults |
+| `.env.local` | ❌ Not committed | Personal overrides (DO NOT commit) |
+| `.env.dev` | ✅ Committed | Development-specific defaults |
+
+---
+
+## 📝 Environment Files
+
+- **`.env`**: Default configuration (committed)
+- **`.env.local`**: Your personal overrides (NOT committed — use for secrets)
+- **`.env.dev`**: Development-specific values (committed)
+- **`.env.test`**: Testing configuration (committed)
+
+---
+
+## 🔒 Security Best Practices
+
+- ✅ Never commit `.pem` files or sensitive `.env.local`
+- ✅ Use `.env` for defaults, `.env.local` for secrets
+- ✅ Regenerate JWT keys regularly in production
+- ✅ Keep Symfony and dependencies updated: `composer update`
+- ✅ Use HTTPS in production
+
+---
+
+## 📚 API Documentation
+
+Once the server is running, access:
+- **API Docs**: `http://localhost:8000/api`
+- **OpenAPI Schema**: `http://localhost:8000/api.json`
+
+---
+
+## 🐛 Troubleshooting
+
+### Database connection failed
+```bash
+# Check MySQL is running (macOS with Homebrew)
+brew services list
+
+# Or check via MySQL CLI
+mysql -u root -p
+
+# Verify DATABASE_URL in .env.local
+php bin/console dbal:run-sql "SELECT 1"
+```
+- [Doctrine ORM](https://www.doctrine-project.org/)
+- [JWT Bundle](https://github.com/lexik/LexikJWTAuthenticationBundle)
+
+---
+
+## 👥 Contributors
+
+OdontoManage Backend Development Team
+
+---
+
+**Last Updated**: April 29, 2026 | **Framework**: Symfony 7.4 | **Database**: MySQL 8.0+
+
+
