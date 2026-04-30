@@ -137,6 +137,18 @@
             "./.env.dev"
         ]
     },
+    "symfony/form": {
+        "version": "7.4",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "7.2",
+            "ref": "7d86a6723f4a623f59e2bf966b6aad2fc461d36b"
+        },
+        "files": [
+            "./config/packages/csrf.yaml"
+        ]
+    },
     "symfony/framework-bundle": {
         "version": "7.4",
         "recipe": {
@@ -157,18 +169,6 @@
             "./.editorconfig"
         ]
     },
-    "symfony/mailer": {
-        "version": "7.4",
-        "recipe": {
-            "repo": "github.com/symfony/recipes",
-            "branch": "main",
-            "version": "4.3",
-            "ref": "09051cfde49476e3c12cd3a0e44289ace1c75a4f"
-        },
-        "files": [
-            "./config/packages/mailer.yaml"
-        ]
-    },
     "symfony/maker-bundle": {
         "version": "1.66",
         "recipe": {
@@ -177,18 +177,6 @@
             "version": "1.0",
             "ref": "fadbfe33303a76e25cb63401050439aa9b1a9c7f"
         }
-    },
-    "symfony/messenger": {
-        "version": "7.4",
-        "recipe": {
-            "repo": "github.com/symfony/recipes",
-            "branch": "main",
-            "version": "6.0",
-            "ref": "d8936e2e2230637ef97e5eecc0eea074eecae58b"
-        },
-        "files": [
-            "./config/packages/messenger.yaml"
-        ]
     },
     "symfony/monolog-bundle": {
         "version": "4.0",
@@ -200,18 +188,6 @@
         },
         "files": [
             "./config/packages/monolog.yaml"
-        ]
-    },
-    "symfony/notifier": {
-        "version": "7.4",
-        "recipe": {
-            "repo": "github.com/symfony/recipes",
-            "branch": "main",
-            "version": "5.0",
-            "ref": "178877daf79d2dbd62129dd03612cb1a2cb407cc"
-        },
-        "files": [
-            "./config/packages/notifier.yaml"
         ]
     },
     "symfony/property-info": {
@@ -263,19 +239,6 @@
         "files": [
             "./config/packages/translation.yaml",
             "./translations/.gitignore"
-        ]
-    },
-    "symfony/twig-bundle": {
-        "version": "7.4",
-        "recipe": {
-            "repo": "github.com/symfony/recipes",
-            "branch": "main",
-            "version": "6.4",
-            "ref": "cab5fd2a13a45c266d45a7d9337e28dee6272877"
-        },
-        "files": [
-            "./config/packages/twig.yaml",
-            "./templates/base.html.twig"
         ]
     },
     "symfony/uid": {
