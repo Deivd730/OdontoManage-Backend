@@ -1,12 +1,13 @@
-﻿# OdontoManage Backend
+# OdontoManage Backend
 
-API REST backend for the **OdontoManage** dental management system. Built with **Symfony 7.4** and **MySQL 8.0+**.
+API REST backend for the **OdontoManage** dental management system. Built with **Symfony 7.4**, **API Platform**, and **MySQL 8.0+**.
 
 ---
 
 ## 🏗️ Tech Stack
 
 - **Framework**: Symfony 7.4.*
+- **API**: API Platform 4.2 (REST/JSON-LD)
 - **Database**: MySQL 8.0+ (or MariaDB 10.11+)
 - **Authentication**: JWT (Lexik JWT Authentication Bundle 3.2)
 - **ORM**: Doctrine ORM 3.6
@@ -31,14 +32,6 @@ Make sure you have installed:
 
 ### ✅ Verify PHP Extensions
 
-#### Windows (PowerShell)
-
-```powershell
-php -m | Select-String -Pattern "openssl|sodium|pdo_mysql"
-```
-
-#### macOS (Terminal)
-
 ```bash
 php -m | grep -E "openssl|sodium|pdo_mysql"
 ```
@@ -49,16 +42,6 @@ php -m | grep -E "openssl|sodium|pdo_mysql"
 
 ### 1. Clone Repository & Install Dependencies
 
-#### Windows (PowerShell)
-
-```powershell
-git clone <your-repo-url>
-cd OdontoManage-Backend
-composer install
-```
-
-#### macOS (Terminal)
-
 ```bash
 git clone <your-repo-url>
 cd OdontoManage-Backend
@@ -67,57 +50,24 @@ composer install
 
 ### 2. Generate JWT Keys (MANDATORY)
 
-#### Windows (PowerShell)
-
-```powershell
-New-Item -ItemType Directory -Force -Path config/jwt | Out-Null
-
-openssl genrsa -out config/jwt/private.pem 4096
-openssl rsa -pubout -in config/jwt/private.pem -out config/jwt/public.pem
-```
-
-If `openssl` is not recognized on Windows/XAMPP, use:
-
-```powershell
-& "C:\xampp\apache\bin\openssl.exe" genrsa -out config/jwt/private.pem 4096
-& "C:\xampp\apache\bin\openssl.exe" rsa -pubout -in config/jwt/private.pem -out config/jwt/public.pem
-```
-
-Verify keys were created:
-
-```powershell
-Test-Path config/jwt/private.pem
-Test-Path config/jwt/public.pem
-```
-
-#### macOS (Terminal)
-
 ```bash
 mkdir -p config/jwt
+
+# macOS/Linux
 openssl genrsa -out config/jwt/private.pem 4096
 openssl rsa -pubout -in config/jwt/private.pem -out config/jwt/public.pem
-```
 
-Verify keys were created:
-
-```bash
-test -f config/jwt/private.pem && echo "private.pem OK"
-test -f config/jwt/public.pem && echo "public.pem OK"
+# Windows (PowerShell with OpenSSL installed)
+openssl genrsa -out config/jwt/private.pem 4096
+openssl rsa -pubout -in config/jwt/private.pem -out config/jwt/public.pem
 ```
 
 ⚠️ **Do NOT add a passphrase** (development only). Press Enter when prompted.
 
 ### 3. Configure Environment Variables
 
-#### Windows (PowerShell)
-
-```powershell
-Copy-Item .env .env.local
-```
-
-#### macOS (Terminal)
-
 ```bash
+# Create local environment file
 cp .env .env.local
 ```
 
@@ -137,7 +87,7 @@ Replace `app` (user), `password`, and `odontomanage` (database name) with your a
 
 ### 4. Create Database & Run Migrations
 
-```powershell
+```bash
 php bin/console doctrine:database:create
 php bin/console doctrine:migrations:migrate
 ```
@@ -145,12 +95,12 @@ php bin/console doctrine:migrations:migrate
 ### 5. Start the Server
 
 #### Using Symfony CLI (Recommended)
-```powershell
+```bash
 symfony server:start
 ```
 
 #### Using PHP Built-in Server
-```powershell
+```bash
 php -S 127.0.0.1:8000 -t public
 ```
 
@@ -160,42 +110,214 @@ php -S 127.0.0.1:8000 -t public
 
 ## 📁 Project Structure
 
-```text
+```
 src/
 ├── Command/           # CLI commands
 ├── Constants/         # Application constants
 ├── Controller/        # API endpoints
 ├── DataFixtures/      # Test data
-├── Entity/            # Doctrine entities (models)
-├── EventListener/     # Symfony event handlers
-├── Repository/        # Doctrine repositories (data access)
-├── Service/           # Business logic services
-└── Validator/         # Custom validation rules
+├── Entity/           # Doctrine entities (models)
+├── EventListener/    # Symfony event handlers
+├── Repository/       # Doctrine repositories (data access)
+├── Serializer/       # JSON serialization/deserialization
+├── Service/          # Business logic services
+└── Validator/        # Custom validation rules
 
 config/
-├── jwt/               # JWT keys (private.pem, public.pem)
-├── packages/          # Bundle configurations
-└── routes/            # API routing definitions
+├── jwt/              # JWT keys (private.pem, public.pem)
+├── packages/         # Bundle configurations
+└── routes/           # API routing definitions
 
-migrations/            # Database migrations
+migrations/           # Database migrations
 ```
 
+### 🏗️ Controller Architecture
+
+#### PatientController
+
+```mermaid
+classDiagram
+    class PatientController {
+        -PatientRepository patientRepository
+        -EntityManagerInterface entityManager
+        -SerializerInterface serializer
+        -ValidatorInterface validator
+        +index() JsonResponse
+        +show(Patient) JsonResponse
+        +create(Request) JsonResponse
+        +update(Patient, Request) JsonResponse
+        +patch(Patient, Request) JsonResponse
+        +delete(Patient) JsonResponse
+        +uploadProfileImage(Patient, Request) JsonResponse
+        +removeProfileImage(Patient) JsonResponse
+    }
+    
+    class Patient {
+        -int id
+        -string nationalId
+        -string firstName
+        -string lastName
+        -DateTime birthDate
+        -Odontogram[] odontograms
+        -Appointment[] appointments
+        -Document[] documents
+        -string profileImageName
+    }
+    
+    PatientController --> Patient : manages
+    Patient --> Odontogram : has many
+    Patient --> Appointment : has many
+    Patient --> Document : has many
+```
+
+#### OdontogramController
+
+```mermaid
+classDiagram
+    class OdontogramController {
+        -OdontogramRepository odontogramRepository
+        -PatientRepository patientRepository
+        -PathologyRepository pathologyRepository
+        -TreatmentRepository treatmentRepository
+        -ToothRepository toothRepository
+        -EntityManagerInterface entityManager
+        -SerializerInterface serializer
+        -ValidatorInterface validator
+        +index() JsonResponse
+        +show(Odontogram) JsonResponse
+        +getByPatient(int) JsonResponse
+        +create(Request) JsonResponse
+        +update(Odontogram, Request) JsonResponse
+        +patch(Odontogram, Request) JsonResponse
+        +delete(Odontogram) JsonResponse
+    }
+    
+    class Odontogram {
+        -int id
+        -Patient patient
+        -Appointment appointment
+        -string type
+        -ToothPathology[] toothPathologies
+        -ToothTreatment[] toothTreatments
+        -BridgeTreatment[] bridgeTreatments
+    }
+    
+    class ToothPathology {
+        -Tooth tooth
+        -Pathology pathology
+        -int toothFace
+    }
+    
+    class ToothTreatment {
+        -Treatment treatment
+        -int toothNumber
+        -int toothFace
+        -string status
+    }
+    
+    class BridgeTreatment {
+        -Treatment treatment
+        -int startTooth
+        -int endTooth
+        -string status
+    }
+    
+    OdontogramController --> Odontogram : manages
+    Odontogram --> ToothPathology : has many
+    Odontogram --> ToothTreatment : has many
+    Odontogram --> BridgeTreatment : has many
+```
+
+#### AppointmentController
+
+```mermaid
+classDiagram
+    class AppointmentController {
+        -AppointmentRepository appointmentRepository
+        -PatientRepository patientRepository
+        -DentistRepository dentistRepository
+        -TreatmentRepository treatmentRepository
+        -BoxRepository boxRepository
+        -ClinicSchedulePolicy clinicSchedulePolicy
+        -EntityManagerInterface entityManager
+        -SerializerInterface serializer
+        -ValidatorInterface validator
+        +index(Request) JsonResponse
+        +show(Appointment) JsonResponse
+        +create(Request) JsonResponse
+        +getByPatient(int) JsonResponse
+        +getByDentist(int) JsonResponse
+        +getByBox(int) JsonResponse
+        +getAvailableDentistsByTreatment(int, Request) JsonResponse
+        +getAvailableTreatmentsByDentist(int) JsonResponse
+    }
+    
+    class Appointment {
+        -int id
+        -Patient patient
+        -Dentist dentist
+        -Treatment treatment
+        -Box box
+        -DateTime visitDate
+        -string consultationReason
+    }
+    
+    class Treatment {
+        -int id
+        -string name
+        -int durationMinutes
+        -Dentist[] dentists
+    }
+    
+    AppointmentController --> Appointment : manages
+    Appointment --> Patient : references
+    Appointment --> Dentist : references
+    Appointment --> Treatment : references
+    Appointment --> Box : references
+```
+#### DocumentController
+
+```mermaid
+classDiagram
+    class DocumentController {
+        -DocumentRepository documentRepository
+        -PatientRepository patientRepository
+        -EntityManagerInterface entityManager
+        -SerializerInterface serializer
+        +getByPatient(int) JsonResponse
+        +upload(Request) JsonResponse
+        +delete(Document) JsonResponse
+    }
+    
+    class Document {
+        -int id
+        -Patient patient
+        -string type
+        -string name
+        -DateTime captureDate
+        -string documentFile
+    }
+    
+    DocumentController --> Document : manages
+```
 ---
 
 ## 🔑 Bundles & Features
 
 | Bundle | Purpose |
 |--------|---------|
+| **API Platform** | REST API generation from entities |
 | **Doctrine ORM** | Database abstraction & ORM |
 | **JWT Auth** | Token-based authentication |
 | **Vich Uploader** | File/image upload management |
 | **CORS** | Cross-Origin Resource Sharing |
+| **Messenger** | Asynchronous message handling |
 
 ---
 
 ## 🛠️ Useful Commands
 
-```powershell
+```bash
 # Clear cache
 php bin/console cache:clear
 
@@ -250,44 +372,27 @@ composer update
 
 ---
 
-## 📚 API Base URL
+## 📚 API Documentation
 
 Once the server is running, access:
-- **Main API**: `http://localhost:8000/api`
+- **API Docs**: `http://localhost:8000/api`
+- **OpenAPI Schema**: `http://localhost:8000/api.json`
 
 ---
 
 ## 🐛 Troubleshooting
 
 ### Database connection failed
-
-#### Windows (PowerShell)
-
-```powershell
-# Check MySQL/MariaDB service status (names may vary)
-Get-Service *mysql*,*mariadb*
-
-# Or test database access via CLI
-mysql -u root -p
-
-# Verify DATABASE_URL in .env.local
-php bin/console dbal:run-sql "SELECT 1"
-```
-
-#### macOS (Terminal)
-
 ```bash
-# Check MySQL/MariaDB service status (Homebrew)
+# Check MySQL is running (macOS with Homebrew)
 brew services list
 
-# Or test database access via CLI
+# Or check via MySQL CLI
 mysql -u root -p
 
 # Verify DATABASE_URL in .env.local
 php bin/console dbal:run-sql "SELECT 1"
 ```
-
-Useful references:
 - [Doctrine ORM](https://www.doctrine-project.org/)
 - [JWT Bundle](https://github.com/lexik/LexikJWTAuthenticationBundle)
 
@@ -299,4 +404,6 @@ OdontoManage Backend Development Team
 
 ---
 
-**Last Updated**: May 1, 2026 | **Framework**: Symfony 7.4 | **Database**: MySQL 8.0+
+**Last Updated**: April 29, 2026 | **Framework**: Symfony 7.4 | **Database**: MySQL 8.0+
+
+
