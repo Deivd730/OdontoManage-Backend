@@ -10,6 +10,7 @@ use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -20,6 +21,13 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 class PatientController extends AbstractController
 {
     private const MAX_PROFILE_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
+    private const ALLOWED_PROFILE_IMAGE_MIME_TYPES = [
+        'image/jpeg',
+        'image/jpg',
+        'image/png',
+        'image/gif',
+        'image/webp',
+    ];
     private const NATIONAL_ID_ALREADY_EXISTS_MESSAGE = 'National ID already exists.';
 
     public function __construct(
@@ -56,12 +64,23 @@ class PatientController extends AbstractController
         }
 
         try {
+            $payload = $this->extractPatientPayload($request);
+            $legacyImageError = $this->rejectLegacyProfileImagePayload($payload);
+            if ($legacyImageError !== null) {
+                return $legacyImageError;
+            }
+
             $patient = $this->serializer->deserialize(
-                $request->getContent(),
+                json_encode($payload, JSON_THROW_ON_ERROR),
                 Patient::class,
                 'json',
                 ['groups' => 'patient:write']
             );
+
+            $profileImageError = $this->applyProfileImageUpload($patient, $request);
+            if ($profileImageError !== null) {
+                return $profileImageError;
+            }
 
             $errors = $this->validator->validate($patient);
             if (count($errors) > 0) {
@@ -105,12 +124,23 @@ class PatientController extends AbstractController
         }
 
         try {
+            $payload = $this->extractPatientPayload($request);
+            $legacyImageError = $this->rejectLegacyProfileImagePayload($payload);
+            if ($legacyImageError !== null) {
+                return $legacyImageError;
+            }
+
             $this->serializer->deserialize(
-                $request->getContent(),
+                json_encode($payload, JSON_THROW_ON_ERROR),
                 Patient::class,
                 'json',
                 ['object_to_populate' => $patient, 'groups' => 'patient:write']
             );
+
+            $profileImageError = $this->applyProfileImageUpload($patient, $request);
+            if ($profileImageError !== null) {
+                return $profileImageError;
+            }
 
             $errors = $this->validator->validate($patient);
             if (count($errors) > 0) {
@@ -148,12 +178,23 @@ class PatientController extends AbstractController
         }
 
         try {
+            $payload = $this->extractPatientPayload($request);
+            $legacyImageError = $this->rejectLegacyProfileImagePayload($payload);
+            if ($legacyImageError !== null) {
+                return $legacyImageError;
+            }
+
             $this->serializer->deserialize(
-                $request->getContent(),
+                json_encode($payload, JSON_THROW_ON_ERROR),
                 Patient::class,
                 'json',
                 ['object_to_populate' => $patient, 'groups' => 'patient:write']
             );
+
+            $profileImageError = $this->applyProfileImageUpload($patient, $request);
+            if ($profileImageError !== null) {
+                return $profileImageError;
+            }
 
             $errors = $this->validator->validate($patient);
             if (count($errors) > 0) {
@@ -217,34 +258,30 @@ class PatientController extends AbstractController
         return new JsonResponse( ['message' => 'Patient deleted successfully'], Response::HTTP_OK);
     }
 
-    #[Route('/{id}/profile-image', methods: ['PATCH'])]
+    #[Route('/{id}/profile-image', methods: ['PATCH', 'POST'])]
     public function uploadProfileImage(Patient $patient, Request $request): JsonResponse
     {
         try {
-            $payload = json_decode($request->getContent(), true);
+            $payload = $this->extractPatientPayload($request);
+            $legacyImageError = $this->rejectLegacyProfileImagePayload($payload);
+            if ($legacyImageError !== null) {
+                return $legacyImageError;
+            }
 
-            if (!is_array($payload)) {
+            $profileImageFile = $request->files->get('profileImageFile');
+            if (!$profileImageFile instanceof UploadedFile) {
                 return new JsonResponse(
-                    ['error' => 'Invalid JSON payload.'],
+                    ['error' => 'The field profileImageFile is required.'],
                     Response::HTTP_BAD_REQUEST
                 );
             }
 
-            $profileImage = $payload['profileImage'] ?? $payload['profileImageName'] ?? null;
-
-            if (!is_string($profileImage) || trim($profileImage) === '') {
-                return new JsonResponse(
-                    ['error' => 'The field profileImage is required.'],
-                    Response::HTTP_BAD_REQUEST
-                );
+            $fileValidationError = $this->validateProfileImageUploadedFile($profileImageFile);
+            if ($fileValidationError !== null) {
+                return $fileValidationError;
             }
 
-            $validationError = $this->validateBase64ProfileImage($profileImage);
-            if ($validationError !== null) {
-                return new JsonResponse(['error' => $validationError], Response::HTTP_BAD_REQUEST);
-            }
-
-            $patient->setProfileImageName($profileImage);
+            $patient->setProfileImageFile($profileImageFile);
             $patient->setUpdatedAt(new \DateTimeImmutable());
             $this->entityManager->flush();
 
@@ -259,6 +296,7 @@ class PatientController extends AbstractController
     #[Route('/{id}/profile-image', methods: ['DELETE'])]
     public function removeProfileImage(Patient $patient): JsonResponse
     {
+        $patient->setProfileImageFile(null);
         $patient->setProfileImageName(null);
         $patient->setUpdatedAt(new \DateTimeImmutable());
         $this->entityManager->flush();
@@ -297,24 +335,72 @@ class PatientController extends AbstractController
         );
     }
 
-    private function validateBase64ProfileImage(string $profileImage): ?string
+    private function extractPatientPayload(Request $request): array
     {
-        if (!preg_match('/^data:image\/(png|jpe?g|gif|webp);base64,/', $profileImage)) {
-            return 'Invalid image format. Allowed: PNG, JPG, JPEG, GIF, WEBP.';
+        $contentType = (string) $request->headers->get('Content-Type');
+        if (str_starts_with($contentType, 'multipart/form-data')) {
+            return $request->request->all();
         }
 
-        $parts = explode(',', $profileImage, 2);
-        if (count($parts) !== 2) {
-            return 'Invalid base64 image payload.';
+        $payload = json_decode($request->getContent(), true);
+        if (!is_array($payload)) {
+            throw new \InvalidArgumentException('Invalid JSON payload.');
         }
 
-        $decoded = base64_decode($parts[1], true);
-        if ($decoded === false) {
-            return 'Invalid base64 image content.';
+        return $payload;
+    }
+
+    private function rejectLegacyProfileImagePayload(array $payload): ?JsonResponse
+    {
+        if (array_key_exists('profileImage', $payload) || array_key_exists('profileImageName', $payload)) {
+            return new JsonResponse(
+                ['error' => 'Use profileImageFile with multipart/form-data. Text image payloads are no longer supported.'],
+                Response::HTTP_BAD_REQUEST
+            );
         }
 
-        if (strlen($decoded) > self::MAX_PROFILE_IMAGE_SIZE_BYTES) {
-            return 'Image too large. Maximum size is 5MB.';
+        return null;
+    }
+
+    private function applyProfileImageUpload(Patient $patient, Request $request): ?JsonResponse
+    {
+        $profileImageFile = $request->files->get('profileImageFile');
+        if ($profileImageFile === null) {
+            return null;
+        }
+
+        if (!$profileImageFile instanceof UploadedFile) {
+            return new JsonResponse(
+                ['error' => 'Invalid profileImageFile upload.'],
+                Response::HTTP_BAD_REQUEST
+            );
+        }
+
+        $fileValidationError = $this->validateProfileImageUploadedFile($profileImageFile);
+        if ($fileValidationError !== null) {
+            return $fileValidationError;
+        }
+
+        $patient->setProfileImageFile($profileImageFile);
+
+        return null;
+    }
+
+    private function validateProfileImageUploadedFile(UploadedFile $profileImageFile): ?JsonResponse
+    {
+        if ($profileImageFile->getSize() !== null && $profileImageFile->getSize() > self::MAX_PROFILE_IMAGE_SIZE_BYTES) {
+            return new JsonResponse(
+                ['error' => 'Image too large. Maximum size is 5MB.'],
+                Response::HTTP_BAD_REQUEST
+            );
+        }
+
+        $mimeType = $profileImageFile->getMimeType();
+        if ($mimeType === null || !in_array($mimeType, self::ALLOWED_PROFILE_IMAGE_MIME_TYPES, true)) {
+            return new JsonResponse(
+                ['error' => 'Invalid image format. Allowed: PNG, JPG, JPEG, GIF, WEBP.'],
+                Response::HTTP_BAD_REQUEST
+            );
         }
 
         return null;
