@@ -1,0 +1,14 @@
+.git
+.github
+.devcontainer
+var/
+vendor/
+node_modules/
+tests/
+tools/
+docker-compose*.yml
+compose*.yaml
+.env
+.env.*
+!*.dist
+README.md

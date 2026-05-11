@@ -125,6 +125,50 @@ php -S 127.0.0.1:8000 -t public
 
 ---
 
+## 🚢 Production Deployment (Dokploy + GHCR)
+
+### Manual image publish to GHCR (no build on push)
+
+This repository includes a manual workflow at:
+
+`/.github/workflows/publish-ghcr.yml`
+
+How to use it:
+
+1. Go to GitHub repository `Actions`.
+2. Select `Publish Backend Image to GHCR`.
+3. Click `Run workflow`.
+4. Set:
+   - `image_tag`: e.g. `v1.0.0`
+   - `also_latest`: `true` or `false`
+
+Image will be published to:
+
+`ghcr.io/deivd730/odontomanage-backend:<tag>`
+
+### Dokploy backend service setup
+
+1. Create an **Application** using Docker image from GHCR:
+   - Image: `ghcr.io/deivd730/odontomanage-backend:v1.0.0` (or your chosen tag)
+2. Add environment variables:
+   - `APP_ENV=prod`
+   - `APP_DEBUG=0`
+   - `DATABASE_URL=...`
+   - `CORS_ALLOW_ORIGIN=^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$|^https://.*\.vercel\.app$|^https://yourdomain\.com$`
+3. Configure persistent volume for uploads:
+   - Mount `/app/public/uploads`
+4. Disable `Auto Deploy` in Dokploy.
+5. Deploy manually when needed.
+
+### Notes for JWT in production
+
+- Generate production JWT keys and provide them in container path:
+  - `/app/config/jwt/private.pem`
+  - `/app/config/jwt/public.pem`
+- Set secure `JWT_PASSPHRASE` in Dokploy environment variables.
+
+---
+
 ## 📁 Project Structure
 
 ```
