@@ -8,7 +8,6 @@ tests/
 tools/
 docker-compose*.yml
 compose*.yaml
-.env
 .env.*
 !*.dist
 README.md
