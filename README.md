@@ -1,13 +1,13 @@
 # OdontoManage Backend
 
-API REST backend for the **OdontoManage** dental management system. Built with **Symfony 7.4**, **API Platform**, and **MySQL 8.0+**.
+API REST backend for the **OdontoManage** dental management system. Built with **Symfony 7.4**, **Doctrine ORM**, **JWT authentication**, and **MySQL 8.0+**.
 
 ---
 
 ## 🏗️ Tech Stack
 
 - **Framework**: Symfony 7.4.*
-- **API**: API Platform 4.2 (REST/JSON-LD)
+- **API**: Custom Symfony controllers returning JSON responses
 - **Database**: MySQL 8.0+ (or MariaDB 10.11+)
 - **Authentication**: JWT (Lexik JWT Authentication Bundle 3.2)
 - **ORM**: Doctrine ORM 3.6
@@ -33,7 +33,11 @@ Make sure you have installed:
 ### ✅ Verify PHP Extensions
 
 ```bash
+# macOS/Linux
 php -m | grep -E "openssl|sodium|pdo_mysql"
+
+# Windows PowerShell
+php -m | Select-String "openssl|sodium|pdo_mysql"
 ```
 
 ---
@@ -67,8 +71,11 @@ openssl rsa -pubout -in config/jwt/private.pem -out config/jwt/public.pem
 ### 3. Configure Environment Variables
 
 ```bash
-# Create local environment file
+# macOS/Linux
 cp .env .env.local
+
+# Windows PowerShell
+Copy-Item .env .env.local
 ```
 
 Edit `.env.local` and set your database URL:
@@ -92,7 +99,17 @@ php bin/console doctrine:database:create
 php bin/console doctrine:migrations:migrate
 ```
 
-### 5. Start the Server
+### 5. Load Fixtures (Recommended for Development)
+
+If you want sample data in the database, load the Doctrine fixtures after running the migrations:
+
+```bash
+php bin/console doctrine:fixtures:load --no-interaction
+```
+
+This command replaces the current data in the database with the fixture data.
+
+### 6. Start the Server
 
 #### Using Symfony CLI (Recommended)
 ```bash
@@ -115,11 +132,10 @@ src/
 ├── Command/           # CLI commands
 ├── Constants/         # Application constants
 ├── Controller/        # API endpoints
-├── DataFixtures/      # Test data
+├── DataFixtures/      # Doctrine fixtures for demo/test data
 ├── Entity/           # Doctrine entities (models)
 ├── EventListener/    # Symfony event handlers
 ├── Repository/       # Doctrine repositories (data access)
-├── Serializer/       # JSON serialization/deserialization
 ├── Service/          # Business logic services
 └── Validator/        # Custom validation rules
 
@@ -374,9 +390,7 @@ composer update
 
 ## 📚 API Documentation
 
-Once the server is running, access:
-- **API Docs**: `http://localhost:8000/api`
-- **OpenAPI Schema**: `http://localhost:8000/api.json`
+This project does not include API Platform-generated documentation. Route definitions live in the controllers under `src/Controller/` and the application exposes JSON endpoints directly.
 
 ---
 
@@ -395,6 +409,11 @@ php bin/console dbal:run-sql "SELECT 1"
 ```
 - [Doctrine ORM](https://www.doctrine-project.org/)
 - [JWT Bundle](https://github.com/lexik/LexikJWTAuthenticationBundle)
+
+---
+
+### OdontoManage Frontend
+[OdontoManage-Frontend](https://github.com/Deivd730/OdontoManage-Frontend)
 
 ---
 
