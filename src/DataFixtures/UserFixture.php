@@ -5,9 +5,15 @@ namespace App\DataFixtures;
 use App\Entity\User;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 class UserFixture extends Fixture
 {
+    public function __construct(
+        private UserPasswordHasherInterface $passwordHasher,
+    ) {
+    }
+
     public function load(ObjectManager $manager): void
     {
         $users = [
@@ -15,13 +21,19 @@ class UserFixture extends Fixture
                 'name' => 'admin',
                 'email' => 'admin@gmail.com',
                 'roles' => ['ROLE_ADMIN'],
-                'password' => '$2y$13$m8EGT456LdOtZQ6RuM9cJO3CxVTwqMsiEJcTlQMPVJ1xScAYU.ovK',
+                'password' => '123456',
             ],
             [
                 'name' => 'auxiliar',
                 'email' => 'auxiliar@gmail.com',
                 'roles' => ['ROLE_AUXILIAR'],
-                'password' => '$2y$13$m8EGT456LdOtZQ6RuM9cJO3CxVTwqMsiEJcTlQMPVJ1xScAYU.ovK',
+                'password' => '123456',
+            ],
+            [
+                'name' => 'dentista',
+                'email' => 'dentista@gmail.com',
+                'roles' => ['ROLE_DENTIST'],
+                'password' => '123456',
             ],
         ];
 
@@ -30,7 +42,7 @@ class UserFixture extends Fixture
             $user->setName($data['name']);
             $user->setEmail($data['email']);
             $user->setRoles($data['roles']);
-            $user->setPassword($data['password']);
+            $user->setPassword($this->passwordHasher->hashPassword($user, $data['password']));
 
             $manager->persist($user);
         }
