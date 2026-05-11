@@ -33,9 +33,7 @@ RUN composer install \
 COPY . .
 
 RUN composer dump-autoload --classmap-authoritative --no-dev \
-    && mkdir -p var/cache var/log \
-    && php bin/console cache:clear --env=prod --no-warmup \
-    && php bin/console cache:warmup --env=prod
+    && mkdir -p var/cache var/log
 
 FROM frankenphp_upstream AS runner
 
