@@ -1,7 +1,7 @@
 security:
     password_hashers:
         App\Entity\User:
-            algorithm: auto        
+            algorithm: auto
 
     providers:
         app_user_provider:
@@ -34,6 +34,17 @@ security:
         - { path: ^/api, roles: PUBLIC_ACCESS, methods: [OPTIONS] }
         - { path: ^/api/login, roles: PUBLIC_ACCESS }
         - { path: ^/api/users/register, roles: PUBLIC_ACCESS, methods: [POST] }
+        # Read-only access for the new default role
+        - { path: ^/api/patients, roles: [ROLE_LECTOR, ROLE_AUXILIAR, ROLE_DENTIST, ROLE_ADMIN], methods: [GET] }
+        - { path: ^/api/appointments, roles: [ROLE_LECTOR, ROLE_AUXILIAR, ROLE_DENTIST, ROLE_ADMIN], methods: [GET] }
+        - { path: ^/api/odontograms, roles: [ROLE_LECTOR, ROLE_AUXILIAR, ROLE_DENTIST, ROLE_ADMIN], methods: [GET] }
+        - { path: ^/api/documents, roles: [ROLE_LECTOR, ROLE_AUXILIAR, ROLE_DENTIST, ROLE_ADMIN], methods: [GET] }
+        - { path: ^/api/teeth, roles: [ROLE_LECTOR, ROLE_AUXILIAR, ROLE_DENTIST, ROLE_ADMIN], methods: [GET] }
+        - { path: ^/api/treatments, roles: [ROLE_LECTOR, ROLE_AUXILIAR, ROLE_DENTIST, ROLE_ADMIN], methods: [GET] }
+        - { path: ^/api/boxes, roles: [ROLE_LECTOR, ROLE_AUXILIAR, ROLE_DENTIST, ROLE_ADMIN], methods: [GET] }
+        - { path: ^/api/pathologies, roles: [ROLE_LECTOR, ROLE_AUXILIAR, ROLE_DENTIST, ROLE_ADMIN], methods: [GET] }
+        - { path: ^/api/teeth, roles: [ROLE_AUXILIAR, ROLE_DENTIST, ROLE_ADMIN], methods: [POST, PUT, PATCH, DELETE] }
+        - { path: ^/api/pathologies, roles: [ROLE_AUXILIAR, ROLE_DENTIST, ROLE_ADMIN], methods: [POST, PUT, PATCH, DELETE] }
         # Admin/Technical endpoints (only ROLE_ADMIN)
         - { path: ^/api/users, roles: ROLE_ADMIN }
         - { path: ^/api/dentists, roles: ROLE_ADMIN }

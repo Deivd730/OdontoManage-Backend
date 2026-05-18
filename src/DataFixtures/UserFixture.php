@@ -35,6 +35,12 @@ class UserFixture extends Fixture
                 'roles' => ['ROLE_DENTIST'],
                 'password' => '123456',
             ],
+            [
+                'name' => 'lector',
+                'email' => 'lector@gmail.com',
+                'roles' => ['ROLE_LECTOR'],
+                'password' => '123456',
+            ],
         ];
 
         foreach ($users as $data) {

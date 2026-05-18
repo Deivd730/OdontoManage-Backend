@@ -69,13 +69,13 @@ class UserController extends AbstractController
             return new JsonResponse(['error' => 'Email already registered.'], Response::HTTP_CONFLICT);
         }
 
-        // Validate and filter roles - only ROLE_AUXILIAR allowed for self-registration
-        // ROLE_DENTIST and ROLE_ADMIN can only be created by ROLE_ADMIN through /api/users endpoint
-        $validRoles = ['ROLE_AUXILIAR'];
+        // Validate and filter roles - only ROLE_LECTOR allowed for self-registration
+        // ROLE_DENTIST, ROLE_ADMIN, and ROLE_AUXILIAR can only be created by ROLE_ADMIN through /api/users endpoint
+        $validRoles = ['ROLE_LECTOR'];
         $roles = array_filter($roles, static fn(string $role): bool => in_array($role, $validRoles, true));
 
         if (empty($roles)) {
-            $roles = ['ROLE_AUXILIAR']; // Default role
+            $roles = ['ROLE_LECTOR']; // Default role
         }
 
         $user = new User();
@@ -161,12 +161,12 @@ class UserController extends AbstractController
             return new JsonResponse(['error' => 'Email already registered.'], Response::HTTP_CONFLICT);
         }
 
-        // Validate roles - only ROLE_ADMIN can create ROLE_DENTIST and ROLE_ADMIN users
-        $validRoles = ['ROLE_ADMIN', 'ROLE_AUXILIAR', 'ROLE_DENTIST'];
+        // Validate roles - ROLE_ADMIN can create all roles, including the default read-only role
+        $validRoles = ['ROLE_ADMIN', 'ROLE_AUXILIAR', 'ROLE_DENTIST', 'ROLE_LECTOR'];
         $roles = array_filter($roles, static fn(string $role): bool => in_array($role, $validRoles, true));
 
         if (empty($roles)) {
-            $roles = ['ROLE_AUXILIAR']; // Default role
+            $roles = ['ROLE_LECTOR']; // Default role
         }
 
         $user = new User();
@@ -220,7 +220,7 @@ class UserController extends AbstractController
         if (isset($payload['roles']) && $this->isGranted('ROLE_ADMIN')) {
             $validRoles = ['ROLE_ADMIN', 'ROLE_AUXILIAR'];
             $roles = array_filter($payload['roles'], static fn(string $role): bool => in_array($role, $validRoles, true));
-            
+
             if (!empty($roles)) {
                 $userToUpdate->setRoles($roles);
             }
